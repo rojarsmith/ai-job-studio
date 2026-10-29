@@ -9,7 +9,8 @@ Set-Location $root
 if ($Workspace) { $env:JOB_WORKSPACE = $Workspace }
 $ws = (& node scripts/workspace.mjs path 2>$null | Select-Object -First 1)
 if (-not $ws) { Write-Error 'cannot resolve workspace'; exit 1 }
-$log = Join-Path $ws 'data\daily.log'
+New-Item -ItemType Directory -Force -Path (Join-Path $ws 'runtime') | Out-Null
+$log = Join-Path $ws 'runtime\daily.log'
 function Log($m) { $line = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $m"; Write-Host $line; Add-Content -Path $log -Value $line }
 
 Log "== daily start (workspace: $ws) =="

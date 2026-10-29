@@ -1,6 +1,6 @@
 # Mode: interview (S8 prep)
 
-For each `<workspace>/applications/NNN/interview.md` whose `## Prep` section is still the placeholder, build a preparation pack. Text files only. Workspace path: `node scripts/workspace.mjs path`.
+For each `<workspace>/generated/applications/NNN/interview.md` whose `## Prep` section is still the placeholder, build a preparation pack. Text files only. Workspace path: `node scripts/workspace.mjs path`.
 
 Inputs: the report `reports/NNN-*.md` (job text, score lines, knock-outs, gaps), `cv.md`, `applications/NNN/cv.md`, `cover.md`, `review.md`.
 

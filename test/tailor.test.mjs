@@ -3,17 +3,21 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { answersSkeleton, parseReview, setMaterials, listApplications } from '../lib/tailor.mjs';
+import { answersSkeleton, answersOverrideSkeleton, parseReview, setMaterials, listApplications } from '../lib/tailor.mjs';
 import { renderHtml, pageCount } from '../lib/pdf.mjs';
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ajs-t-'));
 
 test('answers skeleton carries profile facts and marks sensitive lines', () => {
-  const s = answersSkeleton({ name: 'A B', email: 'a@b.c', phone: '+1', work_authorization: { other: 'needs_sponsorship' }, salary: { currency: 'TWD', monthly_min: 100000 } }, { company: 'Acme', title: 'Dev' });
+  const s = answersSkeleton({ name: 'A B', email: 'a@b.c', phone: '+1', work_authorization: { other: 'needs_sponsorship' }, salary: { currency: 'TWD', monthly_min: 100000 } });
   assert.match(s, /full_name: A B/);
   assert.match(s, /requires_sponsorship: yes/);
   assert.match(s, /salary_expectation: TWD 100000\/month minimum\s+# needs_confirmation/);
-  assert.match(s, /^# Answers — Acme — Dev/);
+  assert.match(s, /^# Answers \(shared\)/);
+  const o = answersOverrideSkeleton({ company: 'Acme', title: 'Dev' });
+  assert.match(o, /^# Answers — Acme — Dev/);
+  assert.match(o, /why_this_company:/);
+  assert.doesNotMatch(o, /full_name/);
 });
 test('parseReview reads keyword table and verdict', () => {
   const r = parseReview(`# Review

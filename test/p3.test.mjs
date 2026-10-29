@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { parseCredentialText, totp, base32Decode, providers } from '../lib/credentials.mjs';
-import { parseAnswers, matchAnswerKey, splitName } from '../lib/answers.mjs';
+import { parseAnswers, mergeAnswers, matchAnswerKey, splitName } from '../lib/answers.mjs';
 import { knockoutCategory, knockoutsInText } from '../lib/knockout.mjs';
 import { planFill, summarize } from '../lib/form.mjs';
 import { parseTracker, writeTracker, addApplication, setStatus, duplicateChannel, countToday, logApplication } from '../lib/tracker.mjs';
@@ -45,6 +45,15 @@ test('totp matches RFC 6238 vector (SHA1, secret 12345678901234567890, T=59 → 
   assert.equal(base32Decode(secret).toString(), '12345678901234567890');
   assert.equal(totp(secret, { time: 59 * 1000 }), '287082');
   assert.equal(totp(secret, { time: 1111111109 * 1000 }), '081804');
+});
+test('mergeAnswers: override wins per key, empty override values keep the shared value', () => {
+  const shared = parseAnswers('## Identity\n- full_name: A\n- phone: 1\n## Compensation (needs_confirmation)\n- salary_expectation: 100k\n');
+  const over = parseAnswers('## Free-text\n- why_this_company: because\n- phone:\n## Identity\n- full_name: B\n');
+  const m = mergeAnswers(shared, over);
+  assert.equal(m.full_name.value, 'B');
+  assert.equal(m.phone.value, '1');
+  assert.equal(m.why_this_company.value, 'because');
+  assert.equal(m.salary_expectation.needs_confirmation, true);
 });
 test('answers.md parsing and label matching', () => {
   const a = parseAnswers('## Identity\n- full_name: Lin Mei (Amy Lin)\n- email: a@b.c\n\n## Compensation (needs_confirmation)\n- salary_expectation: TWD 100000   # needs_confirmation\n- notice_period: 30 days\n\n## Free-text\n- why_this_company: because\n');

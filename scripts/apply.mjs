@@ -12,7 +12,7 @@ import { loadConfig, nowIso } from '../lib/config.mjs';
 import { P } from '../lib/paths.mjs';
 import { readPipeline, writePipeline, transition } from '../lib/pipeline.mjs';
 import { readReport, writeReport } from '../lib/report.mjs';
-import { parseAnswers } from '../lib/answers.mjs';
+import { parseAnswers, mergeAnswers } from '../lib/answers.mjs';
 import { scanForm, planFill, fillForm, summarize } from '../lib/form.mjs';
 import { addApplication, duplicateChannel, countToday, logApplication } from '../lib/tracker.mjs';
 import { setMaterials } from '../lib/tailor.mjs';
@@ -41,9 +41,9 @@ if (!dry && caps[row.source] !== undefined && n.site >= caps[row.source]) { cons
 if (!dry && caps.total !== undefined && n.total >= caps.total) { console.error(`[apply] total daily cap reached (${n.total}/${caps.total})`); process.exit(1); }
 const dup = duplicateChannel({ company: row.company, title: row.title, channel: row.source });
 if (dup && !dry) { console.error(`[apply] ${row.company} — ${row.title} already applied via ${dup.channel} on ${dup.applied} (#${dup.id}). Stopping; decide by hand.`); process.exit(1); }
-const answersFile = path.join(dir, 'answers.md');
-if (!fs.existsSync(answersFile)) { console.error(`[apply] missing ${answersFile}`); process.exit(1); }
-const answers = parseAnswers(fs.readFileSync(answersFile, 'utf8'));
+if (!fs.existsSync(P.answers)) { console.error(`[apply] missing ${P.answers} (run tailor-prep once, then fill it)`); process.exit(1); }
+const overrideFile = path.join(dir, 'answers.md');
+const answers = mergeAnswers(parseAnswers(fs.readFileSync(P.answers, 'utf8')), fs.existsSync(overrideFile) ? parseAnswers(fs.readFileSync(overrideFile, 'utf8')) : {});
 const files = {};
 for (const [k, f] of [['resume', 'cv.pdf'], ['cover_letter', 'cover.pdf']]) { const p = path.join(dir, f); if (fs.existsSync(p)) files[k] = p; }
 

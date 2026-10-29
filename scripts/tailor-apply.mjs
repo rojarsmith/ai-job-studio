@@ -50,7 +50,7 @@ for (const [f, max, kind] of [['cv.pdf', th.cv_max_pages ?? 2, 'cv'], ['cover.pd
   checks[f] = r;
   problems.push(...r.problems);
 }
-if (!fs.existsSync(path.join(dir, 'answers.md'))) problems.push('answers.md missing');
+if (!fs.existsSync(P.answers)) problems.push('source/answers.md missing (run tailor-prep)');
 
 console.log(`[tailor-apply] ${id}  ${row.company} — ${row.title}  state=${row.state}`);
 console.log(`[tailor-apply] review: ${review.rows.length} keywords, ${review.rows.filter((r) => r.verdict === 'supported').length} supported, ${review.gaps.length} gaps, ${review.rows.filter((r) => r.verdict === 'removed').length} removed; verdict=${review.verdict}`);

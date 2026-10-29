@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { resolveWorkspace, initWorkspace, checkWorkspace, REQUIRED, LAYOUT } from '../lib/workspace.mjs';
+import { resolveWorkspace, initWorkspace, checkWorkspace, migrateWorkspace, isLegacyLayout, REQUIRED, LAYOUT } from '../lib/workspace.mjs';
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ajs-ws-'));
 
@@ -21,10 +21,11 @@ test('init creates layout + required files + .gitignore, never overwrites', () =
   initWorkspace(dir);
   for (const f of REQUIRED) assert.ok(fs.existsSync(path.join(dir, f)), f);
   for (const d of LAYOUT) assert.ok(fs.statSync(path.join(dir, d)).isDirectory(), d);
-  assert.match(fs.readFileSync(path.join(dir, '.gitignore'), 'utf8'), /profiles\//);
-  fs.writeFileSync(path.join(dir, 'cv.md'), 'mine');
+  assert.match(fs.readFileSync(path.join(dir, '.gitignore'), 'utf8'), /^runtime\/$/m);
+  fs.writeFileSync(path.join(dir, 'source', 'cv.md'), 'mine');
   initWorkspace(dir);
-  assert.equal(fs.readFileSync(path.join(dir, 'cv.md'), 'utf8'), 'mine');
+  assert.equal(fs.readFileSync(path.join(dir, 'source', 'cv.md'), 'utf8'), 'mine');
+  assert.ok(fs.existsSync(path.join(dir, 'generated', 'data', 'pipeline.md')));
 });
 test('check flags missing files and reports example cv', () => {
   const dir = path.join(tmp, 'ws2');
@@ -32,8 +33,34 @@ test('check flags missing files and reports example cv', () => {
   let r = checkWorkspace(dir, { root: path.join(tmp, 'repo') });
   assert.equal(r.ok, true, r.problems.join('; '));
   assert.ok(r.notes.some((n) => /still looks like the example/.test(n)));
-  fs.rmSync(path.join(dir, 'config', 'profile.yml'));
+  fs.rmSync(path.join(dir, 'source', 'profile.yml'));
   r = checkWorkspace(dir, { root: path.join(tmp, 'repo') });
   assert.equal(r.ok, false);
   assert.ok(r.problems.some((p) => /profile\.yml/.test(p)));
+});
+test('migrate moves a flat workspace into tiers, never overwrites, and check refuses the flat layout', () => {
+  const dir = path.join(tmp, 'flat');
+  for (const d of ['config', 'data', 'reports', 'applications/001', 'retro', 'profiles/104', 'secrets']) fs.mkdirSync(path.join(dir, d), { recursive: true });
+  fs.writeFileSync(path.join(dir, 'cv.md'), 'cv');
+  fs.writeFileSync(path.join(dir, 'config', 'profile.yml'), 'name: x');
+  fs.writeFileSync(path.join(dir, 'config', 'credentials.yml'), 'x: 1');
+  fs.writeFileSync(path.join(dir, 'data', 'pipeline.md'), '# p');
+  fs.writeFileSync(path.join(dir, 'applications', '001', 'cv.md'), 'tailored');
+  fs.writeFileSync(path.join(dir, 'secrets', '104.txt'), 'id: a\npassword: b');
+  assert.equal(isLegacyLayout(dir), true);
+  assert.equal(checkWorkspace(dir, { root: path.join(tmp, 'repo') }).ok, false);
+  assert.throws(() => initWorkspace(dir), /migrate/);
+  const dry = migrateWorkspace(dir, { dryRun: true });
+  assert.ok(fs.existsSync(path.join(dir, 'cv.md')));
+  assert.ok(dry.some(([f, t]) => f === 'config/credentials.yml' && t === 'runtime/secrets/credentials.yml'));
+  migrateWorkspace(dir);
+  assert.equal(isLegacyLayout(dir), false);
+  assert.equal(fs.readFileSync(path.join(dir, 'source', 'cv.md'), 'utf8'), 'cv');
+  assert.equal(fs.readFileSync(path.join(dir, 'source', 'profile.yml'), 'utf8'), 'name: x');
+  assert.equal(fs.readFileSync(path.join(dir, 'generated', 'applications', '001', 'cv.md'), 'utf8'), 'tailored');
+  assert.ok(fs.existsSync(path.join(dir, 'runtime', 'secrets', '104.txt')));
+  assert.ok(fs.existsSync(path.join(dir, 'runtime', 'profiles', '104')));
+  assert.ok(!fs.existsSync(path.join(dir, 'config')));
+  assert.match(fs.readFileSync(path.join(dir, '.gitignore'), 'utf8'), /^runtime\/$/m);
+  assert.throws(() => migrateWorkspace(dir), /not a flat/);
 });

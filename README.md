@@ -27,16 +27,17 @@ Built from the research and design in [research-design/job-search-ai-research](h
 ```bash
 git clone https://github.com/rojarsmith/ai-job-studio && cd ai-job-studio
 npm install
-node scripts/workspace.mjs init          # creates ./workspace (git-ignored) from examples/
-# edit workspace/config/profile.yml, workspace/config/portals.yml, workspace/cv.md
+node scripts/workspace.mjs init --workspace D:/private/job-workspace   # any folder outside the repo; omit the flag for ./workspace (git-ignored)
+echo D:/private/job-workspace > .workspace                             # pointer file (git-ignored) so every script finds it
+# edit source/profile.yml, source/portals.yml, source/cv.md in that folder
 node scripts/workspace.mjs check         # layout + "will this leak into git" check
 ```
 
 Daily loop:
 
 ```bash
-node scripts/discover.mjs        # S1  search portals → workspace/data/pipeline.md (dedup, blacklist). --recheck for liveness
-node scripts/score-prep.mjs      # S2a fetch full text → workspace/reports/NNN-*.md; deal-breaker hits scored 1 without an LLM
+node scripts/discover.mjs        # S1  search portals → generated/data/pipeline.md (dedup, blacklist). --recheck for liveness
+node scripts/score-prep.mjs      # S2a fetch full text → generated/reports/NNN-*.md; deal-breaker hits scored 1 without an LLM
 #                                  S2b in Claude Code: run modes/score.md (see "Running a mode" below)
 node scripts/score-apply.mjs     # S2c validate scores, enforce thresholds, move rows to scored / skip
 node scripts/status.mjs
@@ -45,7 +46,7 @@ node scripts/status.mjs
 Tailoring (S3), per application:
 
 ```bash
-node scripts/tailor-prep.mjs       # S3a  applications/NNN/ with answers.md skeleton for every scored apply/maybe row
+node scripts/tailor-prep.mjs       # S3a  generated/applications/NNN/ (brief + per-job answers override) for every scored apply/maybe row; creates source/answers.md once
 #                                    S3b  in Claude Code: run modes/tailor.md → cv.md, cover.md, review.md (drafter, then a fresh reviewer)
 node scripts/build-pdf.mjs NNN     # S3c  Chrome → cv.pdf, cover.pdf; gate: ≤2 / ≤1 pages, contact info in text layer, name first
 node scripts/tailor-apply.mjs NNN  # S3d  shows reviewer summary + checks; you read, then approve with --ok → state tailored
@@ -77,7 +78,7 @@ Preparing and applying (S4, S5), with you next to the window:
 ```bash
 node scripts/prepare.mjs 104            # S4  open 104 in your Chrome; auto-login from credentials if enabled, else wait for you; tailored → prepared
 node scripts/prepare.mjs 104 --check    #     just report the login state
-node scripts/apply.mjs 008 --dry-run    # S5  open the form, scan it, write applications/008/filled.json; nothing typed
+node scripts/apply.mjs 008 --dry-run    # S5  open the form, scan it, write generated/applications/008/filled.json; nothing typed
 node scripts/apply.mjs 008              # S5  fill text / select / upload; checkbox, radio and knock-out questions are listed for you;
                                         #     then it waits: you review, answer those, press submit in the window, type "submitted"
 ```
@@ -119,12 +120,12 @@ Never schedule `prepare` or `apply` unattended: they open logged-in sessions and
 
 ## Credentials and login
 
-Nothing in this repo stores a password. When a site is logged out, `prepare`/`apply` try the credential providers configured in `workspace/config/browser.yml` (off by default per site), type the login at human speed, and hand over to you the moment a 2FA, CAPTCHA, Passkey or "unusual activity" page appears. Providers:
+Nothing in this repo stores a password. When a site is logged out, `prepare`/`apply` try the credential providers configured in `source/browser.yml` (off by default per site), type the login at human speed, and hand over to you the moment a 2FA, CAPTCHA, Passkey or "unusual activity" page appears. Providers:
 
 | Provider | Where | Format |
 | --- | --- | --- |
-| `dir` | `<workspace>/secrets/<site>.txt` (or any folder via `credentials.dir.path`) | free text: `email: …` / `password: …` lines; Chinese labels ok; URLs and notes ignored |
-| `file` | `<workspace>/config/credentials.yml` | `"104": { username, password, totp_secret }` |
+| `dir` | `<workspace>/runtime/secrets/<site>.txt` (or any folder via `credentials.dir.path`) | free text: `email: …` / `password: …` lines; Chinese labels ok; URLs and notes ignored |
+| `file` | `<workspace>/runtime/secrets/credentials.yml` | `"104": { username, password, totp_secret }` |
 | `env` | `JOB_CRED_104_USER`, `JOB_CRED_104_PASS`, `JOB_CRED_104_TOTP` | |
 
 Any value may be `cmd:<command>` (read from your password manager CLI) or `dpapi:<blob>` (Windows DPAPI, current user; create with `node -e "import('./lib/credentials.mjs').then(m=>console.log(m.dpapiEncrypt('secret')))"`). TOTP codes are generated locally when a `totp_secret` is present; SMS / email OTP, Passkeys and CAPTCHAs are always yours.
@@ -133,7 +134,7 @@ Account locks: an "unusual activity" page marks the site locked in `data/session
 
 ## Workspace
 
-Everything private is one directory with a fixed layout (see [examples/workspace/README.md](examples/workspace/README.md)). The code finds it in this order:
+This repo is the read-only program; everything that is yours lives in one workspace directory, ideally outside the repo (a folder inside the repo is git-ignored but `git clean -x` deletes it). The code finds it in this order:
 
 | Order | Source | Use case |
 | --- | --- | --- |
@@ -149,9 +150,19 @@ Ways to keep it private, all equivalent to the code:
 - **Encrypted or synced drive** — point `JOB_WORKSPACE` or `.workspace` at it.
 - **Anything else** — mount, decrypt, or generate a directory with the layout; nothing in the code assumes where it came from.
 
-`node scripts/workspace.mjs check` fails if the workspace sits inside this repo without being ignored, or is a git repo without a `.gitignore`.
+Inside the workspace, three tiers with one rule each (details in [examples/workspace/README.md](examples/workspace/README.md)):
 
-Settings that are machine-specific (Chrome binary, CDP port) live in `workspace/config/browser.yml`, not in code.
+| Tier | Holds | Who writes | Back up / commit? |
+| --- | --- | --- | --- |
+| `source/` | `cv.md`, `profile.yml`, `portals.yml`, `thresholds.yml`, `blacklist.yml`, `browser.yml`, `sites.yml`, `answers.md`, `templates/` | you | yes |
+| `generated/` | `reports/`, `applications/NNN/`, `data/` (pipeline, tracker, logs), `retro/` | scripts and modes | optional; delete it to restart with your settings intact |
+| `runtime/` | `secrets/`, `profiles/` (browser sessions), `*.log` | scripts | never; the workspace `.gitignore` excludes it |
+
+Code and modes treat `source/` as read-only. The one exception is `tailor-prep`, which creates `source/answers.md` from `profile.yml` if it is missing and never touches it again.
+
+`node scripts/workspace.mjs check` fails if the workspace sits inside this repo without being ignored, is a git repo without ignoring `runtime/`, or still uses the pre-tier flat layout (`node scripts/workspace.mjs migrate` moves it; `--dry-run` shows the plan). `workspace.mjs path generated` prints a tier path for scripts and modes.
+
+Settings that are machine-specific (Chrome binary, CDP port) live in `source/browser.yml`, not in code.
 
 ## Layout
 
@@ -161,7 +172,7 @@ browser/      launch.mjs session.mjs wait-human.mjs   L1: Patchright + real Chro
 lib/          state pipeline dedup blacklist report scoring tailor pdf http browser-fetch workspace profile credentials sessions answers knockout form tracker login followups retro
 modes/        score tailor followup interview debrief retro    L4: prompts run inside Claude Code / Codex
 scripts/      workspace discover score-prep score-apply tailor-prep build-pdf tailor-apply prepare apply track followup outcome retro status daily.ps1 weekly.ps1
-templates/    resume.css cover.css        default stylesheets; <workspace>/templates/ overrides by file name
+templates/    resume.css cover.css        default stylesheets; <workspace>/source/templates/ overrides by file name
 examples/     workspace/                  templates copied by `workspace init`; the only config in this repo
 test/         node --test
 ```
@@ -172,7 +183,7 @@ test/         node --test
 - States: `discovered → scored → (skip | tailored) → prepared → filled → submitted → screening → interview → (offer | rejected | ghosted)`, plus `needs_human` from any pre-submit state. `lib/state.mjs` rejects everything else; `prepared → submitted` without a human does not exist.
 - Every state change appends to `data/status-log.tsv`, every scan to `data/scan-history.tsv`.
 - Report frontmatter written by the scorer: `score`, `action`, `scores.{skills,seniority,location,compensation,red_flags}`, `deal_breaker`, `scored_by`, `scored_at`.
-- `applications/NNN/` (NNN = report id): `brief.md`, `answers.md` (facts from profile; legal / salary / visa lines are `needs_confirmation` and never auto-filled), `cv.md`, `cover.md`, `review.md` (keyword → evidence → `supported | removed | gap`, ending in `verdict: pass|fail`), `cv.pdf`, `cover.pdf`.
+- `source/answers.md`: facts shared by every form (from profile; legal / salary / visa lines are `needs_confirmation` and never auto-filled). `generated/applications/NNN/` (NNN = report id): `brief.md`, `answers.md` (per-job overrides and free text; wins key by key), `cv.md`, `cover.md`, `review.md` (keyword → evidence → `supported | removed | gap`, ending in `verdict: pass|fail`), `cv.pdf`, `cover.pdf`.
 - `tailor-apply --ok` refuses unless review verdict is pass, both PDFs pass the checks, and the row is in `scored`. The approval is written to the report's `## Materials`.
 
 ## Adapters
@@ -183,9 +194,9 @@ test/         node --test
 | 104 | `/jobs/search/api/jobs` | `/job/ajax/content/<id>` (`switch != on` = closed) | plain fetch; falls back to your Chrome when Cloudflare challenges Node's TLS |
 | LinkedIn | guest `jobs-guest/jobs/api/seeMoreJobPostings/search` (HTML cards) | guest `jobs/api/jobPosting/<id>` (404 = closed) | plain fetch; HTTP 429 = rate-limited, source stops for the run; JS wall → your Chrome |
 
-Login-state detection, login-form selectors and apply URLs per site are adapter defaults that `<workspace>/config/sites.yml` can override without code changes. The 104 login and apply selectors are **unverified** against the live site; run `prepare.mjs 104 --check` and `apply.mjs NNN --dry-run` first and adjust `sites.yml` if the scan finds nothing.
+Login-state detection, login-form selectors and apply URLs per site are adapter defaults that `<workspace>/source/sites.yml` can override without code changes. The 104 login and apply selectors are **unverified** against the live site; run `prepare.mjs 104 --check` and `apply.mjs NNN --dry-run` first and adjust `sites.yml` if the scan finds nothing.
 
-The Chrome fallback (`lib/browser-fetch.mjs`) uses a dedicated login-free profile `profiles/_api`. Headless by default; set `api_fetch_headless: false` in `browser.yml` if a site keeps challenging. `JOB_NO_BROWSER_FALLBACK=1` disables it.
+The Chrome fallback (`lib/browser-fetch.mjs`) uses a dedicated login-free profile `runtime/profiles/_api`. Headless by default; set `api_fetch_headless: false` in `browser.yml` if a site keeps challenging. `JOB_NO_BROWSER_FALLBACK=1` disables it.
 
 ## Tests
 
