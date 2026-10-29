@@ -37,7 +37,7 @@ Daily loop:
 ```bash
 node scripts/discover.mjs        # S1  search portals → workspace/data/pipeline.md (dedup, blacklist). --recheck for liveness
 node scripts/score-prep.mjs      # S2a fetch full text → workspace/reports/NNN-*.md; deal-breaker hits scored 1 without an LLM
-#                                  S2b in Claude Code: run modes/score.md   (or: claude -p "$(cat modes/score.md)" --add-dir <workspace>)
+#                                  S2b in Claude Code: run modes/score.md (see "Running a mode" below)
 node scripts/score-apply.mjs     # S2c validate scores, enforce thresholds, move rows to scored / skip
 node scripts/status.mjs
 ```
@@ -52,6 +52,25 @@ node scripts/tailor-apply.mjs NNN  # S3d  shows reviewer summary + checks; you r
 ```
 
 `scripts/daily.ps1 -Workspace <dir>` chains everything up to the human gates for Windows Task Scheduler.
+
+### Running a mode
+
+Modes are plain prompts. Interactively, open Claude Code in the repo and say "follow modes/score.md". Non-interactively:
+
+```powershell
+# PowerShell
+claude -p (Get-Content modes/score.md -Raw) --add-dir workspace --permission-mode acceptEdits
+```
+```bash
+# bash
+claude -p "$(cat modes/score.md)" --add-dir workspace --permission-mode acceptEdits
+```
+```
+:: cmd.exe (no command substitution; let the agent read the file)
+claude -p "Read modes/score.md and follow it exactly." --add-dir workspace --permission-mode acceptEdits
+```
+
+`--add-dir` must point at the workspace, otherwise the agent cannot write reports. Replace `score.md` with `tailor.md` for S3.
 
 PDF rendering uses your Chrome (see `browser.yml`), so there is no LaTeX or pandoc to install. Text-layer checks need `pdftotext` from poppler; without it only page counts are checked and the gate says so.
 
