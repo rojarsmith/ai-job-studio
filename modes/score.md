@@ -18,7 +18,7 @@ For each report with `score: null`:
 2. Score five dimensions, each an integer 1 to 5:
    - `skills` — how many must-have skills are evidenced in `cv.md`. 5 = all, 3 = most core ones, 1 = different stack.
    - `seniority` — fit between the role's level and `profile.yml` seniority. 5 = exact, 1 = two levels off.
-   - `location` — site, remote type, timezone vs profile location and remote_preference. 5 = matches, 1 = relocation with no sponsorship.
+   - `location` — site, remote type, timezone vs profile location and remote_preference. 5 = matches, 1 = relocation with no sponsorship. "Remote" postings that name hiring countries (common on Greenhouse: "Remote, United States; Remote, Poland") count as those countries only: if the profile's country is not named and work authorization is needed, score ≤ 2 and list "country of residence / work eligibility" under knock-outs.
    - `compensation` — stated or inferable pay vs profile salary floor. Unknown = 3.
    - `red_flags` — 5 = none, 3 = minor (vague scope, long unpaid test), 1 = serious (unpaid, commission only, staffing bait, mass-posted).
 3. If any `deal_breakers` entry from `profile.yml` clearly applies, set `deal_breaker` to that string and `score: 1`. Otherwise `deal_breaker: null`.
