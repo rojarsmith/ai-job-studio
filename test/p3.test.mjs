@@ -56,7 +56,7 @@ test('answers.md parsing and label matching', () => {
   assert.equal(matchAnswerKey('LinkedIn Profile'), 'linkedin');
   assert.equal(matchAnswerKey('Why do you want to work at Acme?'), 'why_this_company');
   assert.equal(matchAnswerKey('Favourite colour'), null);
-  assert.deepEqual(splitName('Lin Mei (Amy Lin)'), { first: 'Wu', last: 'Bin' });
+  assert.deepEqual(splitName('Lin Mei (Amy Lin)'), { first: 'Lin', last: 'Mei' });
   assert.deepEqual(splitName('王小明'), { first: '王小明', last: '' });
 });
 test('knock-out detection', () => {
