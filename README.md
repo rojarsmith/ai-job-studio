@@ -20,7 +20,7 @@ Built from the research and design in [research-design/job-search-ai-research](h
 | P2 | S3 drafter / reviewer mode, PDF build with Chrome, page / text-layer / contact checks, human gate | **done** |
 | P3 | credentials providers, S4 prepare (login state, auto login, `wait_human`), S5 apply (generic form filler, knock-outs, human submit, tracker, daily caps) | **done, needs live verification on 104** |
 | P4 | LinkedIn adapter (guest search / detail, login state, Easy Apply multi-step fill), lock detection, daily caps | **done, needs live verification** |
-| P5 | S6 track, S7 follow-up, S8 outcome, S9 retro, scheduling | |
+| P5 | S6 track, S7 follow-up drafts, S8 interview prep / debrief / outcome, S9 weekly retro with suggestions, daily + weekly scheduling | **done** |
 
 ## Quick start
 
@@ -84,10 +84,38 @@ node scripts/apply.mjs 008              # S5  fill text / select / upload; check
 
 Multi-step forms (LinkedIn Easy Apply, Workday): after you click Next in the window, type `next` and the newly visible step is scanned and filled the same way; `submitted` / `abort` end the loop. LinkedIn postings with an external Apply button are reported and left to you.
 
+After submission (S6 to S9):
+
+```bash
+node scripts/track.mjs                                  # S6  counts by status, open applications
+node scripts/track.mjs --set 008 screening "recruiter call"
+node scripts/track.mjs --mark-ghosted                   #     submitted/screening untouched for thresholds.ghost_days → ghosted
+node scripts/followup.mjs                               # S7  draft stubs at followup_days; modes/followup.md writes the text; you send
+node scripts/followup.mjs --sent 008 7
+node scripts/outcome.mjs 008 interview "on-site 11/12"  # S8  creates applications/008/interview.md for modes/interview.md
+node scripts/outcome.mjs 008 debrief                    #     after the interview; modes/debrief.md expands your notes
+node scripts/outcome.mjs 008 rejected "needs US work authorization"
+node scripts/retro.mjs                                  # S9  retro/YYYY-WW.md: funnel per source, response by score, rejection buckets, suggestions
+```
+
+`modes/retro.md` reads that file and proposes threshold / keyword / blacklist changes under `## Decisions`; you apply what you accept. `scripts/weekly.ps1` runs the ghosting sweep, follow-up stubs, retro and both modes on Mondays.
+
 What `apply` never does: click a submit button, tick a checkbox or radio, answer salary / visa / legal / demographic questions, solve a CAPTCHA.
 Gates before the browser opens: row state, per-site and total daily caps (`thresholds.daily_max`), same company + title already applied through another channel.
 
 PDF rendering uses your Chrome (see `browser.yml`), so there is no LaTeX or pandoc to install. Text-layer checks need `pdftotext` from poppler; without it only page counts are checked and the gate says so.
+
+## Schedule
+
+| When | What | Human needed |
+| --- | --- | --- |
+| daily 08:00 | `daily.ps1`: discover → score-prep → score mode → score-apply → tailor-prep → tailor mode → PDFs | no |
+| daily, your working hours | review `tailor-apply NNN`, approve with `--ok`; `prepare <site>`; `apply NNN` and press submit | yes |
+| daily 18:00 (optional) | `track.mjs` | no |
+| Monday | `weekly.ps1`: ghosting sweep, follow-up drafts, retro, followup + retro modes | review decisions |
+| weekly | `prepare <site> --check` for sites the retro flags as stale or locked | yes |
+
+Never schedule `prepare` or `apply` unattended: they open logged-in sessions and stop at `wait_human`.
 
 ## Credentials and login
 
@@ -130,9 +158,9 @@ Settings that are machine-specific (Chrome binary, CDP port) live in `workspace/
 ```
 adapters/     greenhouse.mjs 104.mjs      L2: search / detail / isLive now; fill / login_state / submit_gate in P3
 browser/      launch.mjs session.mjs wait-human.mjs   L1: Patchright + real Chrome, per-site profile or CDP attach, ensureLoggedIn, wait_human
-lib/          state pipeline dedup blacklist report scoring tailor pdf http browser-fetch workspace profile credentials sessions answers knockout form tracker login
-modes/        score.md tailor.md          L4: prompts run inside Claude Code / Codex
-scripts/      workspace discover score-prep score-apply tailor-prep build-pdf tailor-apply prepare apply status daily.ps1
+lib/          state pipeline dedup blacklist report scoring tailor pdf http browser-fetch workspace profile credentials sessions answers knockout form tracker login followups retro
+modes/        score tailor followup interview debrief retro    L4: prompts run inside Claude Code / Codex
+scripts/      workspace discover score-prep score-apply tailor-prep build-pdf tailor-apply prepare apply track followup outcome retro status daily.ps1 weekly.ps1
 templates/    resume.css cover.css        default stylesheets; <workspace>/templates/ overrides by file name
 examples/     workspace/                  templates copied by `workspace init`; the only config in this repo
 test/         node --test

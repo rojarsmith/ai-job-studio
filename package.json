@@ -19,6 +19,10 @@
     "tailor:apply": "node scripts/tailor-apply.mjs",
     "prepare": "node scripts/prepare.mjs",
     "apply": "node scripts/apply.mjs",
+    "track": "node scripts/track.mjs",
+    "followup": "node scripts/followup.mjs",
+    "outcome": "node scripts/outcome.mjs",
+    "retro": "node scripts/retro.mjs",
     "workspace": "node scripts/workspace.mjs",
     "test": "node --test \"test/**/*.test.mjs\""
   },
