@@ -1,0 +1,6 @@
+node_modules/
+profiles/
+*.storageState.json
+.env
+# per-application private material is kept, but never session data
+applications/**/filled.json

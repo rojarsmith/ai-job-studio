@@ -1,0 +1,17 @@
+# S2: overall score 1..5. >= apply_min -> apply, >= maybe_min -> maybe, else skip.
+apply_min: 4
+maybe_min: 3
+# S5: per-site daily submission caps (enforced in P3+). total caps everything.
+daily_max:
+  linkedin: 10
+  "104": 15
+  greenhouse: 25
+  total: 25
+# S7: follow-up drafts on these days after submission.
+followup_days: [7, 14]
+# S1: re-check liveness of open rows (discovered/scored) older than this many days.
+liveness_recheck_days: 7
+# Polite rate limits for login-free APIs (ms).
+rate:
+  min_delay_ms: 1500
+  max_delay_ms: 4000

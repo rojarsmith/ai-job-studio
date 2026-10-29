@@ -1,0 +1,28 @@
+# Who you are. The only place personal facts live; cv.md is the evidence source for skills.
+name: "Your Name"
+email: "you@example.com"
+phone: "+886-9xx-xxx-xxx"
+location: "Taipei, Taiwan"
+work_authorization:
+  taiwan: citizen          # citizen | permit | needs_sponsorship
+  other: needs_sponsorship
+remote_preference: hybrid  # onsite | hybrid | remote | any
+target_titles:
+  - Backend Engineer
+  - Software Engineer
+  - Platform Engineer
+seniority: senior          # junior | mid | senior | staff
+salary:
+  currency: TWD
+  monthly_min: 100000
+  note: "annual >= 1.5M TWD or equivalent"
+languages:
+  - zh-TW
+  - en
+# Any hit here forces score = 1 and action = skip. Match is case-insensitive substring on title + description.
+deal_breakers:
+  - "unpaid"
+  - "commission only"
+  - "100% onsite in US"
+  - "派遣"
+  - "外包駐點"

@@ -1,0 +1,38 @@
+# Sources for S1 Discover. Login-free APIs only. Login-required sites are handled in P3+.
+sources:
+  greenhouse:
+    enabled: true
+    # Greenhouse board tokens (https://boards.greenhouse.io/<token>). Public API, no auth.
+    boards:
+      - cloudflare
+      - gitlab
+    # A job is kept when its title matches ANY keyword (case-insensitive substring).
+    keywords:
+      - backend
+      - platform
+      - software engineer
+      - site reliability
+    # Keep when location.name or "Job Posting Location" metadata matches ANY of these. Empty list = keep all.
+    locations:
+      - taiwan
+      - taipei
+      - remote
+      - apac
+      - asia
+  "104":
+    enabled: true
+    # One search per keyword × area.
+    keywords:
+      - Node.js 後端
+      - Golang
+      - Platform Engineer
+    # 104 area codes: 6001001000 台北市, 6001002000 新北市, 6001006000 新竹縣市, 6001008000 台中市, 6001016000 高雄市
+    areas:
+      - 6001001000
+      - 6001002000
+    max_pages: 2
+    pagesize: 20
+    # Passed straight into the search API. ro=1 full-time, order=15 newest first, remoteWork=1 remote only.
+    params:
+      ro: 1
+      order: 15

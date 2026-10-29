@@ -1,0 +1,10 @@
+# Companies, title patterns and URL fragments that never enter the pipeline.
+companies:
+  - "Example Staffing Co"
+# Regular expressions (case-insensitive) tested against the title.
+title_patterns:
+  - "intern(ship)?\b"
+  - "實習"
+  - "工讀"
+url_contains:
+  - "example-agency.com"
