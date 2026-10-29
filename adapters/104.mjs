@@ -76,3 +76,32 @@ export async function detail(url) {
 }
 
 export async function isLive(url) { return (await detail(url)) !== null; }
+
+// ---- S4 / S5: 104 needs a member login. Selectors below are defaults; override in <workspace>/config/sites.yml
+// under "104" if the site changes. UNVERIFIED against the live site as of 2026-10-29. ----
+import { siteConfig, genericLoginState, genericLogin } from '../lib/login.mjs';
+export const needs_login = true;
+const SITE = () => siteConfig('104', {
+  home_url: 'https://www.104.com.tw/jobs/main/',
+  login_url: 'https://accounts.104.com.tw/login',
+  login_url_re: 'accounts\\.104\\.com\\.tw',
+  apply_url_template: 'https://www.104.com.tw/job/{id}/apply',
+  locked_re: '帳號(已)?(被)?(鎖定|停用)|異常(登入|活動)|unusual activity',
+  selectors: {
+    logged_in: ['a[href*="logout"]', 'a[href*="/profile"]', 'text=登出'],
+    logged_out: ['a[href*="accounts.104.com.tw/login"]', 'text=登入'],
+    username: '#username, input[name="username"], input[name="email"], input[type="email"], input[name*="user" i]',
+    password: '#password, input[name="password"], input[type="password"]',
+    submit: 'button[type="submit"], button:has-text("登入")',
+    totp: 'input[name*="otp" i], input[name*="code" i], input[autocomplete="one-time-code"]',
+  },
+  cookie_names: [],
+});
+export async function login_state(page) { return genericLoginState(page, SITE()); }
+export async function login(page, creds) { return genericLogin(page, creds, SITE()); }
+export function apply_url(job) { return SITE().apply_url_template.replace('{id}', jobIdOf(job.url) ?? ''); }
+export async function open_form(page) {
+  try { await page.locator('form:has(textarea), form:has(input[type="file"]), form').first().waitFor({ state: 'visible', timeout: 15000 }); return true; } catch { return false; }
+}
+export async function submit_gate() { return 'needs_human'; }
+export const notes = '104 應徵頁通常帶出站內履歷與自我推薦信 textarea；本工具只填 textarea 與文字欄位，附件與送出由你操作。';

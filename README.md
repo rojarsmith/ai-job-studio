@@ -18,7 +18,7 @@ Built from the research and design in [research-design/job-search-ai-research](h
 | --- | --- | --- |
 | P1 | workspace, data files, state machine, S1 discover (Greenhouse, 104), S2 score mode | done |
 | P2 | S3 drafter / reviewer mode, PDF build with Chrome, page / text-layer / contact checks, human gate | **done** |
-| P3 | adapters `fill` / `wait_human` for 104 and Greenhouse, knock-out detection | |
+| P3 | credentials providers, S4 prepare (login state, auto login, `wait_human`), S5 apply (generic form filler, knock-outs, human submit, tracker, daily caps) | **done, needs live verification on 104** |
 | P4 | LinkedIn adapter, daily caps, lock detection | |
 | P5 | S6 track, S7 follow-up, S8 outcome, S9 retro, scheduling | |
 
@@ -72,7 +72,34 @@ claude -p "Read modes/score.md and follow it exactly." --add-dir workspace --per
 
 `--add-dir` must point at the workspace, otherwise the agent cannot write reports. Replace `score.md` with `tailor.md` for S3.
 
+Preparing and applying (S4, S5), with you next to the window:
+
+```bash
+node scripts/prepare.mjs 104            # S4  open 104 in your Chrome; auto-login from credentials if enabled, else wait for you; tailored → prepared
+node scripts/prepare.mjs 104 --check    #     just report the login state
+node scripts/apply.mjs 008 --dry-run    # S5  open the form, scan it, write applications/008/filled.json; nothing typed
+node scripts/apply.mjs 008              # S5  fill text / select / upload; checkbox, radio and knock-out questions are listed for you;
+                                        #     then it waits: you review, answer those, press submit in the window, type "submitted"
+```
+
+What `apply` never does: click a submit button, tick a checkbox or radio, answer salary / visa / legal / demographic questions, solve a CAPTCHA.
+Gates before the browser opens: row state, per-site and total daily caps (`thresholds.daily_max`), same company + title already applied through another channel.
+
 PDF rendering uses your Chrome (see `browser.yml`), so there is no LaTeX or pandoc to install. Text-layer checks need `pdftotext` from poppler; without it only page counts are checked and the gate says so.
+
+## Credentials and login
+
+Nothing in this repo stores a password. When a site is logged out, `prepare`/`apply` try the credential providers configured in `workspace/config/browser.yml` (off by default per site), type the login at human speed, and hand over to you the moment a 2FA, CAPTCHA, Passkey or "unusual activity" page appears. Providers:
+
+| Provider | Where | Format |
+| --- | --- | --- |
+| `dir` | `<workspace>/secrets/<site>.txt` (or any folder via `credentials.dir.path`) | free text: `email: …` / `password: …` lines; Chinese labels ok; URLs and notes ignored |
+| `file` | `<workspace>/config/credentials.yml` | `"104": { username, password, totp_secret }` |
+| `env` | `JOB_CRED_104_USER`, `JOB_CRED_104_PASS`, `JOB_CRED_104_TOTP` | |
+
+Any value may be `cmd:<command>` (read from your password manager CLI) or `dpapi:<blob>` (Windows DPAPI, current user; create with `node -e "import('./lib/credentials.mjs').then(m=>console.log(m.dpapiEncrypt('secret')))"`). TOTP codes are generated locally when a `totp_secret` is present; SMS / email OTP, Passkeys and CAPTCHAs are always yours.
+
+Account locks: an "unusual activity" page marks the site locked in `data/sessions.tsv`; every script refuses that site for 24 hours.
 
 ## Workspace
 
@@ -100,10 +127,10 @@ Settings that are machine-specific (Chrome binary, CDP port) live in `workspace/
 
 ```
 adapters/     greenhouse.mjs 104.mjs      L2: search / detail / isLive now; fill / login_state / submit_gate in P3
-browser/      launch.mjs wait-human.mjs   L1: Patchright + real Chrome, per-site persistent profile, wait_human
-lib/          state.mjs pipeline.mjs dedup.mjs blacklist.mjs report.mjs scoring.mjs tailor.mjs pdf.mjs http.mjs browser-fetch.mjs workspace.mjs
+browser/      launch.mjs session.mjs wait-human.mjs   L1: Patchright + real Chrome, per-site profile or CDP attach, ensureLoggedIn, wait_human
+lib/          state pipeline dedup blacklist report scoring tailor pdf http browser-fetch workspace profile credentials sessions answers knockout form tracker login
 modes/        score.md tailor.md          L4: prompts run inside Claude Code / Codex
-scripts/      workspace.mjs discover.mjs score-prep.mjs score-apply.mjs tailor-prep.mjs build-pdf.mjs tailor-apply.mjs status.mjs daily.ps1
+scripts/      workspace discover score-prep score-apply tailor-prep build-pdf tailor-apply prepare apply status daily.ps1
 templates/    resume.css cover.css        default stylesheets; <workspace>/templates/ overrides by file name
 examples/     workspace/                  templates copied by `workspace init`; the only config in this repo
 test/         node --test
@@ -124,6 +151,8 @@ test/         node --test
 | --- | --- | --- | --- |
 | Greenhouse | `boards-api.greenhouse.io/v1/boards/<board>/jobs` | `/jobs/<id>` (404 = closed) | plain fetch |
 | 104 | `/jobs/search/api/jobs` | `/job/ajax/content/<id>` (`switch != on` = closed) | plain fetch; falls back to your Chrome when Cloudflare challenges Node's TLS |
+
+Login-state detection, login-form selectors and apply URLs per site are adapter defaults that `<workspace>/config/sites.yml` can override without code changes. The 104 login and apply selectors are **unverified** against the live site; run `prepare.mjs 104 --check` and `apply.mjs NNN --dry-run` first and adjust `sites.yml` if the scan finds nothing.
 
 The Chrome fallback (`lib/browser-fetch.mjs`) uses a dedicated login-free profile `profiles/_api`. Headless by default; set `api_fetch_headless: false` in `browser.yml` if a site keeps challenging. `JOB_NO_BROWSER_FALLBACK=1` disables it.
 

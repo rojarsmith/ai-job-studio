@@ -17,6 +17,8 @@
     "tailor:prep": "node scripts/tailor-prep.mjs",
     "build:pdf": "node scripts/build-pdf.mjs",
     "tailor:apply": "node scripts/tailor-apply.mjs",
+    "prepare": "node scripts/prepare.mjs",
+    "apply": "node scripts/apply.mjs",
     "workspace": "node scripts/workspace.mjs",
     "test": "node --test \"test/**/*.test.mjs\""
   },

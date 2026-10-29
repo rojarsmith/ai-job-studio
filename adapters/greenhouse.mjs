@@ -64,3 +64,20 @@ export async function detail(url, { board } = {}) {
 }
 
 export async function isLive(url, opts) { return (await detail(url, opts)) !== null; }
+
+// ---- S4 / S5: Greenhouse boards need no account. The form is on the job page itself. ----
+export const needs_login = false;
+export async function login_state() { return 'in'; }
+export const login = null;
+export function apply_url(job) {
+  const p = parseJobUrl(job.url);
+  return p?.board ? `https://job-boards.greenhouse.io/${p.board}/jobs/${p.id}#app` : job.url;
+}
+/** Wait for the application form; returns true when a form with a file input or email field is present. */
+export async function open_form(page) {
+  const sel = 'form[id*="application"], #application_form, form:has(input[type="file"]), form:has(input[type="email"])';
+  try { await page.locator(sel).first().waitFor({ state: 'visible', timeout: 15000 }); return true; } catch { return false; }
+}
+/** Design S5: always wait for the human. Never finds or clicks a submit button. */
+export async function submit_gate() { return 'needs_human'; }
+export const notes = 'Lever-style hCaptcha risk does not apply, but Greenhouse forms may include EEO radio groups and custom questions; all radio/checkbox stay needs_confirmation.';

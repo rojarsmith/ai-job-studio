@@ -18,4 +18,11 @@ console.log(`reports waiting for score: ${unscored.length}${unscored.length ? '\
 const ready = rows.filter((r) => r.state === 'scored');
 if (ready.length) console.log('ready for S3 tailor (node scripts/tailor-prep.mjs):\n  ' + ready.map((r) => `[${r.score}] ${r.company} — ${r.title}  ${r.report}`).join('\n  '));
 const tailored = rows.filter((r) => r.state === 'tailored');
-if (tailored.length) console.log('tailored, waiting for S4 prepare:\n  ' + tailored.map((r) => `[${r.score}] ${r.company} — ${r.title}  applications/${r.report.slice(0, 3)}/`).join('\n  '));
+if (tailored.length) console.log('tailored, waiting for S4 prepare (node scripts/prepare.mjs <site>):\n  ' + tailored.map((r) => `[${r.score}] ${r.source}  ${r.company} — ${r.title}  applications/${r.report.slice(0, 3)}/`).join('\n  '));
+const prepared = rows.filter((r) => ['prepared', 'filled'].includes(r.state));
+if (prepared.length) console.log('ready for S5 apply (node scripts/apply.mjs NNN):\n  ' + prepared.map((r) => `${r.report.slice(0, 3)}  ${r.state}  ${r.source}  ${r.company} — ${r.title}`).join('\n  '));
+const human = rows.filter((r) => r.state === 'needs_human');
+if (human.length) console.log('needs_human:\n  ' + human.map((r) => `${r.report?.slice(0, 3) ?? '-'}  ${r.source}  ${r.company} — ${r.title}`).join('\n  '));
+const { readSessions } = await import('../lib/sessions.mjs');
+const sessions = readSessions();
+if (sessions.length) console.log('sessions: ' + sessions.map((s) => `${s.site}(verified ${s.last_verified || '-'}${s.locked ? ', LOCKED ' + s.locked.slice(0, 10) : ''})`).join('  '));

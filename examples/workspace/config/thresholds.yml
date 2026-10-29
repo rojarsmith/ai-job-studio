@@ -9,6 +9,8 @@ daily_max:
   total: 25
 # S7: follow-up drafts on these days after submission.
 followup_days: [7, 14]
+# S6: submitted rows with no status change for this many days are candidates for "ghosted" (track --mark-ghosted).
+ghost_days: 30
 # S1: re-check liveness of open rows (discovered/scored) older than this many days.
 liveness_recheck_days: 7
 # Polite rate limits for login-free APIs (ms).
