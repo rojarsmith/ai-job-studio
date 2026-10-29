@@ -19,7 +19,7 @@ Built from the research and design in [research-design/job-search-ai-research](h
 | P1 | workspace, data files, state machine, S1 discover (Greenhouse, 104), S2 score mode | done |
 | P2 | S3 drafter / reviewer mode, PDF build with Chrome, page / text-layer / contact checks, human gate | **done** |
 | P3 | credentials providers, S4 prepare (login state, auto login, `wait_human`), S5 apply (generic form filler, knock-outs, human submit, tracker, daily caps) | **done, needs live verification on 104** |
-| P4 | LinkedIn adapter, daily caps, lock detection | |
+| P4 | LinkedIn adapter (guest search / detail, login state, Easy Apply multi-step fill), lock detection, daily caps | **done, needs live verification** |
 | P5 | S6 track, S7 follow-up, S8 outcome, S9 retro, scheduling | |
 
 ## Quick start
@@ -81,6 +81,8 @@ node scripts/apply.mjs 008 --dry-run    # S5  open the form, scan it, write appl
 node scripts/apply.mjs 008              # S5  fill text / select / upload; checkbox, radio and knock-out questions are listed for you;
                                         #     then it waits: you review, answer those, press submit in the window, type "submitted"
 ```
+
+Multi-step forms (LinkedIn Easy Apply, Workday): after you click Next in the window, type `next` and the newly visible step is scanned and filled the same way; `submitted` / `abort` end the loop. LinkedIn postings with an external Apply button are reported and left to you.
 
 What `apply` never does: click a submit button, tick a checkbox or radio, answer salary / visa / legal / demographic questions, solve a CAPTCHA.
 Gates before the browser opens: row state, per-site and total daily caps (`thresholds.daily_max`), same company + title already applied through another channel.
@@ -151,6 +153,7 @@ test/         node --test
 | --- | --- | --- | --- |
 | Greenhouse | `boards-api.greenhouse.io/v1/boards/<board>/jobs` | `/jobs/<id>` (404 = closed) | plain fetch |
 | 104 | `/jobs/search/api/jobs` | `/job/ajax/content/<id>` (`switch != on` = closed) | plain fetch; falls back to your Chrome when Cloudflare challenges Node's TLS |
+| LinkedIn | guest `jobs-guest/jobs/api/seeMoreJobPostings/search` (HTML cards) | guest `jobs/api/jobPosting/<id>` (404 = closed) | plain fetch; HTTP 429 = rate-limited, source stops for the run; JS wall → your Chrome |
 
 Login-state detection, login-form selectors and apply URLs per site are adapter defaults that `<workspace>/config/sites.yml` can override without code changes. The 104 login and apply selectors are **unverified** against the live site; run `prepare.mjs 104 --check` and `apply.mjs NNN --dry-run` first and adjust `sites.yml` if the scan finds nothing.
 

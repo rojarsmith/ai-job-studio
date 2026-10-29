@@ -36,3 +36,16 @@ sources:
     params:
       ro: 1
       order: 15
+  linkedin:
+    enabled: false
+    # Guest search API, no login. Rate-limited hard (HTTP 429): keep keywords few and max_pages 1. Falls back to your
+    # Chrome when a JS wall appears. Enable only after prepare.mjs linkedin --check works, and keep daily_max.linkedin low.
+    keywords:
+      - Engineering Manager
+      - Director of Engineering
+    locations:
+      - Taiwan
+    max_pages: 1
+    # extra query params, e.g. f_WT: 2 (remote), f_TPR: r604800 (past week)
+    params:
+      f_TPR: r604800

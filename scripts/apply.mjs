@@ -77,10 +77,23 @@ try {
     transition(row, 'filled', `fields=${plan.length} confirm=${needs.length}`);
     writePipeline(pipeline);
     const gate = await adapter.submit_gate(session.page);
-    await waitHuman(session.page, `${row.source}: review the form, answer the ${needs.length} confirmation field(s) yourself, then SUBMIT in the window (${gate})`, { prompt: 'type  submitted  or  abort  then Enter' });
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    const answer = await new Promise((r) => rl.question('> ', r)); rl.close();
-    if (/^submitted$/i.test(answer.trim())) {
+    // Multi-step forms (LinkedIn Easy Apply, Workday): after you click Next in the window, type "next" and the
+    // newly visible fields are scanned and filled the same way. "submitted" / "abort" end the loop.
+    let answer = '';
+    for (let step = 1; ; step++) {
+      await waitHuman(session.page, `${row.source}: step ${step} — review the form, answer the ${needs.length} confirmation field(s) yourself${adapter.multi_step ? ', click Next if there is one' : ''}, SUBMIT in the window when done (${gate})`, { prompt: `type  ${adapter.multi_step ? 'next | ' : ''}submitted | abort  then Enter` });
+      const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+      answer = (await new Promise((r) => rl.question('> ', r))).trim().toLowerCase(); rl.close();
+      if (answer !== 'next') break;
+      const more = planFill(await scanForm(session.page), answers, { files });
+      const filledMore = await fillForm(session.page, more);
+      plan.push(...filledMore.filter((e) => !plan.some((p) => p.key === e.key)));
+      needs.length = 0; needs.push(...plan.filter((e) => e.status === 'needs_confirmation'));
+      console.log(`[apply] step ${step + 1}: ${JSON.stringify(summarize(filledMore))}`);
+      for (const e of filledMore.filter((x) => x.status === 'needs_confirmation')) console.log(`  [confirm] ${e.label}${e.value ? `  → suggested: ${e.value}` : ''}  (${e.note})`);
+      fs.writeFileSync(path.join(dir, 'filled.json'), JSON.stringify({ id, url: session.page.url(), at: nowIso(), dry_run: dry, summary: summarize(plan), fields: plan }, null, 2));
+    }
+    if (answer === 'submitted') {
       transition(row, 'submitted', 'human submitted');
       addApplication({ id, company: row.company, title: row.title, url: row.url, channel: row.source, next: `follow up on +${(th.followup_days ?? [7])[0]}d` });
       logApplication(row.source, row.url);
