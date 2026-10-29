@@ -16,4 +16,6 @@ console.log('by source: ' + Object.entries(bySource).map(([k, v]) => `${k}=${v}`
 const unscored = listReports().filter((f) => readReport(f).front.score == null);
 console.log(`reports waiting for score: ${unscored.length}${unscored.length ? '\n  ' + unscored.join('\n  ') : ''}`);
 const ready = rows.filter((r) => r.state === 'scored');
-if (ready.length) console.log('ready for S3 tailor:\n  ' + ready.map((r) => `[${r.score}] ${r.company} — ${r.title}  ${r.report}`).join('\n  '));
+if (ready.length) console.log('ready for S3 tailor (node scripts/tailor-prep.mjs):\n  ' + ready.map((r) => `[${r.score}] ${r.company} — ${r.title}  ${r.report}`).join('\n  '));
+const tailored = rows.filter((r) => r.state === 'tailored');
+if (tailored.length) console.log('tailored, waiting for S4 prepare:\n  ' + tailored.map((r) => `[${r.score}] ${r.company} — ${r.title}  applications/${r.report.slice(0, 3)}/`).join('\n  '));

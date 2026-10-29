@@ -28,5 +28,14 @@ if (-not $NoLlm -and $claude) {
   Log 'claude CLI not found; reports left with score: null. Run modes/score.md inside Claude Code, then node scripts/score-apply.mjs'
 }
 & node scripts/score-apply.mjs 2>&1 | Tee-Object -FilePath $log -Append
+
+# S3 up to the human gate: create application folders, draft + review with the LLM, build PDFs.
+& node scripts/tailor-prep.mjs 2>&1 | Tee-Object -FilePath $log -Append
+if (-not $NoLlm -and $claude) {
+  Log 'tailoring with Claude Code (modes/tailor.md)'
+  $prompt = Get-Content (Join-Path $root 'modes\tailor.md') -Raw
+  & claude -p $prompt --permission-mode acceptEdits --add-dir $ws --allowedTools 'Read,Edit,Write,Glob,Grep,Agent,Bash(node scripts/build-pdf.mjs *),Bash(node scripts/tailor-apply.mjs *)' 2>&1 | Tee-Object -FilePath $log -Append
+}
+& node scripts/tailor-apply.mjs --list 2>&1 | Tee-Object -FilePath $log -Append
 & node scripts/status.mjs 2>&1 | Tee-Object -FilePath $log -Append
 Log '== daily end =='

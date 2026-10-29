@@ -1,0 +1,9 @@
+/* Default cover-letter stylesheet. Copy to <workspace>/templates/cover.css to customise. */
+@page { size: A4; margin: 22mm 20mm; }
+html { font-size: 11pt; }
+body { font-family: "Segoe UI", "Noto Sans", "Noto Sans CJK TC", "Microsoft JhengHei", Arial, sans-serif; color: #111; line-height: 1.45; margin: 0; }
+h1 { font-size: 15pt; margin: 0 0 2pt 0; }
+h1 + p { margin: 0 0 14pt 0; color: #333; }
+p { margin: 0 0 9pt 0; }
+ul { margin: 0 0 9pt 0; padding-left: 16pt; }
+a { color: inherit; text-decoration: none; }

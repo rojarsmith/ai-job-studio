@@ -2,6 +2,8 @@
 name: "Your Name"
 email: "you@example.com"
 phone: "+886-9xx-xxx-xxx"
+linkedin: ""
+website: ""
 location: "Taipei, Taiwan"
 work_authorization:
   taiwan: citizen          # citizen | permit | needs_sponsorship

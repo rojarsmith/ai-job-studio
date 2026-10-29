@@ -16,8 +16,8 @@ Built from the research and design in [research-design/job-search-ai-research](h
 
 | Phase | Scope | State |
 | --- | --- | --- |
-| P1 | workspace, data files, state machine, S1 discover (Greenhouse, 104), S2 score mode | **done** |
-| P2 | S3 drafter / reviewer, PDF build and text-layer checks | next |
+| P1 | workspace, data files, state machine, S1 discover (Greenhouse, 104), S2 score mode | done |
+| P2 | S3 drafter / reviewer mode, PDF build with Chrome, page / text-layer / contact checks, human gate | **done** |
 | P3 | adapters `fill` / `wait_human` for 104 and Greenhouse, knock-out detection | |
 | P4 | LinkedIn adapter, daily caps, lock detection | |
 | P5 | S6 track, S7 follow-up, S8 outcome, S9 retro, scheduling | |
@@ -42,7 +42,18 @@ node scripts/score-apply.mjs     # S2c validate scores, enforce thresholds, move
 node scripts/status.mjs
 ```
 
-`scripts/daily.ps1 -Workspace <dir>` chains all of that for Windows Task Scheduler.
+Tailoring (S3), per application:
+
+```bash
+node scripts/tailor-prep.mjs       # S3a  applications/NNN/ with answers.md skeleton for every scored apply/maybe row
+#                                    S3b  in Claude Code: run modes/tailor.md → cv.md, cover.md, review.md (drafter, then a fresh reviewer)
+node scripts/build-pdf.mjs NNN     # S3c  Chrome → cv.pdf, cover.pdf; gate: ≤2 / ≤1 pages, contact info in text layer, name first
+node scripts/tailor-apply.mjs NNN  # S3d  shows reviewer summary + checks; you read, then approve with --ok → state tailored
+```
+
+`scripts/daily.ps1 -Workspace <dir>` chains everything up to the human gates for Windows Task Scheduler.
+
+PDF rendering uses your Chrome (see `browser.yml`), so there is no LaTeX or pandoc to install. Text-layer checks need `pdftotext` from poppler; without it only page counts are checked and the gate says so.
 
 ## Workspace
 
@@ -71,9 +82,10 @@ Settings that are machine-specific (Chrome binary, CDP port) live in `workspace/
 ```
 adapters/     greenhouse.mjs 104.mjs      L2: search / detail / isLive now; fill / login_state / submit_gate in P3
 browser/      launch.mjs wait-human.mjs   L1: Patchright + real Chrome, per-site persistent profile, wait_human
-lib/          state.mjs pipeline.mjs dedup.mjs blacklist.mjs report.mjs scoring.mjs http.mjs browser-fetch.mjs workspace.mjs
-modes/        score.md                    L4: prompts run inside Claude Code / Codex
-scripts/      workspace.mjs discover.mjs score-prep.mjs score-apply.mjs status.mjs daily.ps1
+lib/          state.mjs pipeline.mjs dedup.mjs blacklist.mjs report.mjs scoring.mjs tailor.mjs pdf.mjs http.mjs browser-fetch.mjs workspace.mjs
+modes/        score.md tailor.md          L4: prompts run inside Claude Code / Codex
+scripts/      workspace.mjs discover.mjs score-prep.mjs score-apply.mjs tailor-prep.mjs build-pdf.mjs tailor-apply.mjs status.mjs daily.ps1
+templates/    resume.css cover.css        default stylesheets; <workspace>/templates/ overrides by file name
 examples/     workspace/                  templates copied by `workspace init`; the only config in this repo
 test/         node --test
 ```
@@ -84,6 +96,8 @@ test/         node --test
 - States: `discovered → scored → (skip | tailored) → prepared → filled → submitted → screening → interview → (offer | rejected | ghosted)`, plus `needs_human` from any pre-submit state. `lib/state.mjs` rejects everything else; `prepared → submitted` without a human does not exist.
 - Every state change appends to `data/status-log.tsv`, every scan to `data/scan-history.tsv`.
 - Report frontmatter written by the scorer: `score`, `action`, `scores.{skills,seniority,location,compensation,red_flags}`, `deal_breaker`, `scored_by`, `scored_at`.
+- `applications/NNN/` (NNN = report id): `brief.md`, `answers.md` (facts from profile; legal / salary / visa lines are `needs_confirmation` and never auto-filled), `cv.md`, `cover.md`, `review.md` (keyword → evidence → `supported | removed | gap`, ending in `verdict: pass|fail`), `cv.pdf`, `cover.pdf`.
+- `tailor-apply --ok` refuses unless review verdict is pass, both PDFs pass the checks, and the row is in `scored`. The approval is written to the report's `## Materials`.
 
 ## Adapters
 

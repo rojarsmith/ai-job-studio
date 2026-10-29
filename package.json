@@ -6,17 +6,23 @@
   "license": "MIT",
   "repository": "github:rojarsmith/ai-job-studio",
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "discover": "node scripts/discover.mjs",
     "score:prep": "node scripts/score-prep.mjs",
     "score:apply": "node scripts/score-apply.mjs",
     "status": "node scripts/status.mjs",
+    "tailor:prep": "node scripts/tailor-prep.mjs",
+    "build:pdf": "node scripts/build-pdf.mjs",
+    "tailor:apply": "node scripts/tailor-apply.mjs",
     "workspace": "node scripts/workspace.mjs",
     "test": "node --test \"test/**/*.test.mjs\""
   },
   "dependencies": {
     "js-yaml": "^4.1.0",
+    "marked": "^18.1.2",
     "patchright": "^1.64.2"
   }
 }

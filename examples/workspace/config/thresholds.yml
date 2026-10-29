@@ -15,3 +15,8 @@ liveness_recheck_days: 7
 rate:
   min_delay_ms: 1500
   max_delay_ms: 4000
+
+# S3: PDF limits enforced by build-pdf / tailor-apply.
+tailor:
+  cv_max_pages: 2
+  cover_max_pages: 1
