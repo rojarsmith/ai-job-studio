@@ -47,8 +47,8 @@ test('totp matches RFC 6238 vector (SHA1, secret 12345678901234567890, T=59 → 
   assert.equal(totp(secret, { time: 1111111109 * 1000 }), '081804');
 });
 test('answers.md parsing and label matching', () => {
-  const a = parseAnswers('## Identity\n- full_name: Wu Bin (Rojar Smith)\n- email: a@b.c\n\n## Compensation (needs_confirmation)\n- salary_expectation: TWD 100000   # needs_confirmation\n- notice_period: 30 days\n\n## Free-text\n- why_this_company: because\n');
-  assert.equal(a.full_name.value, 'Wu Bin (Rojar Smith)');
+  const a = parseAnswers('## Identity\n- full_name: Lin Mei (Amy Lin)\n- email: a@b.c\n\n## Compensation (needs_confirmation)\n- salary_expectation: TWD 100000   # needs_confirmation\n- notice_period: 30 days\n\n## Free-text\n- why_this_company: because\n');
+  assert.equal(a.full_name.value, 'Lin Mei (Amy Lin)');
   assert.equal(a.salary_expectation.needs_confirmation, true);
   assert.equal(a.notice_period.needs_confirmation, true);
   assert.equal(a.why_this_company.needs_confirmation, false);
@@ -56,7 +56,7 @@ test('answers.md parsing and label matching', () => {
   assert.equal(matchAnswerKey('LinkedIn Profile'), 'linkedin');
   assert.equal(matchAnswerKey('Why do you want to work at Acme?'), 'why_this_company');
   assert.equal(matchAnswerKey('Favourite colour'), null);
-  assert.deepEqual(splitName('Wu Bin (Rojar Smith)'), { first: 'Wu', last: 'Bin' });
+  assert.deepEqual(splitName('Lin Mei (Amy Lin)'), { first: 'Wu', last: 'Bin' });
   assert.deepEqual(splitName('王小明'), { first: '王小明', last: '' });
 });
 test('knock-out detection', () => {
