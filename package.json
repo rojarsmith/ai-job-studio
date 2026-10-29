@@ -2,7 +2,9 @@
   "name": "ai-job-studio",
   "version": "0.1.0",
   "private": true,
-  "description": "Job-search loop: discover, score, tailor, prepare, apply, track. AI suggests, human submits.",
+  "description": "Job-search loop: discover, score, tailor, prepare, apply, track. AI suggests, human submits. Private data lives in a separate workspace.",
+  "license": "MIT",
+  "repository": "github:rojarsmith/ai-job-studio",
   "type": "module",
   "engines": { "node": ">=20" },
   "scripts": {
@@ -10,6 +12,7 @@
     "score:prep": "node scripts/score-prep.mjs",
     "score:apply": "node scripts/score-apply.mjs",
     "status": "node scripts/status.mjs",
+    "workspace": "node scripts/workspace.mjs",
     "test": "node --test \"test/**/*.test.mjs\""
   },
   "dependencies": {

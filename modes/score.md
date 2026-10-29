@@ -4,9 +4,11 @@ You are the scorer in a job-search loop. You only write text files. You never op
 
 ## Inputs
 
-- `cv.md` — the only evidence source for the candidate's skills and history.
-- `config/profile.yml` — target titles, seniority, location, remote preference, salary floor, deal-breakers.
-- `reports/*.md` whose frontmatter has `score: null` — one job per file. The job text is under `## Job description` and `## Requirements`.
+All paths below are inside the private workspace. Find it first: `node scripts/workspace.mjs path`.
+
+- `<workspace>/cv.md` — the only evidence source for the candidate's skills and history.
+- `<workspace>/config/profile.yml` — target titles, seniority, location, remote preference, salary floor, deal-breakers.
+- `<workspace>/reports/*.md` whose frontmatter has `score: null` — one job per file. The job text is under `## Job description` and `## Requirements`.
 
 ## Procedure
 
@@ -33,5 +35,6 @@ For each report with `score: null`:
 
 - Evidence must be quoted or paraphrased from `cv.md`. No evidence, no credit.
 - Do not change anything outside frontmatter, `## Score`, and `## Gaps`.
-- Do not edit `data/pipeline.md`; `scripts/score-apply.mjs` does that.
+- Do not edit `<workspace>/data/pipeline.md`; `scripts/score-apply.mjs` does that.
+- Never copy workspace content into the code repo or anywhere outside the workspace.
 - When finished, run `node scripts/score-apply.mjs` and report its last line.

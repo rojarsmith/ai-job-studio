@@ -4,6 +4,9 @@ import { readPipeline } from '../lib/pipeline.mjs';
 import { listReports, readReport } from '../lib/report.mjs';
 import { STATES } from '../lib/state.mjs';
 
+import { WORKSPACE } from '../lib/paths.mjs';
+
+console.log(`workspace: ${WORKSPACE.dir} (via ${WORKSPACE.via})`);
 const { rows } = readPipeline();
 const count = (key) => rows.reduce((m, r) => (m[r[key] || '-'] = (m[r[key] || '-'] ?? 0) + 1, m), {});
 const byState = count('state'), bySource = count('source');

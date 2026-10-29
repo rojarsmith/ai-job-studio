@@ -1,6 +1,9 @@
 node_modules/
+# Private workspace (default location) and the pointer file to an external one. See examples/workspace/README.md.
+workspace/
+.workspace
+# Belt and braces: session data must never land in this repo even if misplaced.
 profiles/
 *.storageState.json
 .env
-# per-application private material is kept, but never session data
-applications/**/filled.json
+*.log
