@@ -15,6 +15,7 @@
     "score:apply": "node scripts/score-apply.mjs",
     "status": "node scripts/status.mjs",
     "tailor:prep": "node scripts/tailor-prep.mjs",
+    "ats:check": "node scripts/ats-check.mjs",
     "build:pdf": "node scripts/build-pdf.mjs",
     "tailor:apply": "node scripts/tailor-apply.mjs",
     "prepare": "node scripts/prepare.mjs",

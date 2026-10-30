@@ -22,3 +22,7 @@ rate:
 tailor:
   cv_max_pages: 2
   cover_max_pages: 1
+  # ATS gate (ats-check / build-pdf / tailor-apply): share of review.md keywords the draft must mention.
+  keyword_coverage_min: 0.5
+  docx: true            # also write cv.docx / cover.docx (no Chrome needed)
+  upload: pdf           # which named copy apply.mjs attaches: pdf | docx

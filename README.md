@@ -48,8 +48,10 @@ Tailoring (S3), per application:
 ```bash
 node scripts/tailor-prep.mjs       # S3a  generated/applications/NNN/ (brief + per-job answers override) for every scored apply/maybe row; creates source/answers.md once
 #                                    S3b  in Claude Code: run modes/tailor.md → cv.md, cover.md, review.md (drafter, then a fresh reviewer)
-node scripts/build-pdf.mjs NNN     # S3c  Chrome → cv.pdf, cover.pdf; gate: ≤2 / ≤1 pages, contact info in text layer, name first
-node scripts/tailor-apply.mjs NNN  # S3d  shows reviewer summary + checks; you read, then approve with --ok → state tailored
+node scripts/ats-check.mjs NNN     # S3c  no Chrome: standard sections, one date format newest-first, no tables/images, keyword coverage vs review.md
+node scripts/build-pdf.mjs NNN     # S3d  ats-check, then Chrome → cv.pdf/cover.pdf + cv.docx/cover.docx; gate: ≤2 / ≤1 pages, contact in text layer, name first;
+#                                          writes ATS-named copies <Name>-<Title>-CV.pdf (files.json)
+node scripts/tailor-apply.mjs NNN  # S3e  shows reviewer summary + all checks; you read, then approve with --ok → state tailored
 ```
 
 `scripts/daily.ps1 -Workspace <dir>` chains everything up to the human gates for Windows Task Scheduler.
@@ -171,7 +173,7 @@ adapters/     greenhouse.mjs 104.mjs      L2: search / detail / isLive now; fill
 browser/      launch.mjs session.mjs wait-human.mjs   L1: Patchright + real Chrome, per-site profile or CDP attach, ensureLoggedIn, wait_human
 lib/          state pipeline dedup blacklist report scoring tailor pdf http browser-fetch workspace profile credentials sessions answers knockout form tracker login followups retro
 modes/        score tailor followup interview debrief retro    L4: prompts run inside Claude Code / Codex
-scripts/      workspace discover score-prep score-apply tailor-prep build-pdf tailor-apply prepare apply track followup outcome retro status daily.ps1 weekly.ps1
+scripts/      workspace discover score-prep score-apply tailor-prep ats-check build-pdf tailor-apply prepare apply track followup outcome retro status daily.ps1 weekly.ps1
 templates/    resume.css cover.css        default stylesheets; <workspace>/source/templates/ overrides by file name
 examples/     workspace/                  templates copied by `workspace init`; the only config in this repo
 test/         node --test
@@ -183,8 +185,9 @@ test/         node --test
 - States: `discovered → scored → (skip | tailored) → prepared → filled → submitted → screening → interview → (offer | rejected | ghosted)`, plus `needs_human` from any pre-submit state. `lib/state.mjs` rejects everything else; `prepared → submitted` without a human does not exist.
 - Every state change appends to `data/status-log.tsv`, every scan to `data/scan-history.tsv`.
 - Report frontmatter written by the scorer: `score`, `action`, `scores.{skills,seniority,location,compensation,red_flags}`, `deal_breaker`, `scored_by`, `scored_at`.
-- `source/answers.md`: facts shared by every form (from profile; legal / salary / visa lines are `needs_confirmation` and never auto-filled). `generated/applications/NNN/` (NNN = report id): `brief.md`, `answers.md` (per-job overrides and free text; wins key by key), `cv.md`, `cover.md`, `review.md` (keyword → evidence → `supported | removed | gap`, ending in `verdict: pass|fail`), `cv.pdf`, `cover.pdf`.
-- `tailor-apply --ok` refuses unless review verdict is pass, both PDFs pass the checks, and the row is in `scored`. The approval is written to the report's `## Materials`.
+- `source/answers.md`: facts shared by every form (from profile; legal / salary / visa lines are `needs_confirmation` and never auto-filled). `generated/applications/NNN/` (NNN = report id): `brief.md`, `answers.md` (per-job overrides and free text; wins key by key), `cv.md`, `cover.md`, `review.md` (keyword → evidence → `supported | removed | gap`, ending in `verdict: pass|fail`), `cv.pdf`, `cover.pdf`, `cv.docx`, `cover.docx`, ATS-named copies listed in `files.json` (what `apply` uploads; `thresholds.tailor.upload: pdf|docx`).
+- ATS checks (`lib/ats.mjs`, run by `ats-check`, `build-pdf`, `tailor-apply`): H2 headings from the standard set (Summary, Skills, Experience, Education, …; zh-TW equivalents accepted), Skills + Experience present, every role `### Company — Title` with a date range in one format, newest first; no tables, images, HTML, emoji or multi-column text; keyword coverage = review.md keywords the draft mentions, must reach `thresholds.tailor.keyword_coverage_min` (default 0.5), and every `supported` keyword must appear in the draft. Words the posting uses that neither the reviewer nor the draft has are listed as notes only.
+- `tailor-apply --ok` refuses unless review verdict is pass, both PDFs and the ATS checks pass, build-pdf has written the named copies, and the row is in `scored`. The approval is written to the report's `## Materials`.
 
 ## Adapters
 

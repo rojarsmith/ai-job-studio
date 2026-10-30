@@ -44,8 +44,15 @@ if (dup && !dry) { console.error(`[apply] ${row.company} — ${row.title} alread
 if (!fs.existsSync(P.answers)) { console.error(`[apply] missing ${P.answers} (run tailor-prep once, then fill it)`); process.exit(1); }
 const overrideFile = path.join(dir, 'answers.md');
 const answers = mergeAnswers(parseAnswers(fs.readFileSync(P.answers, 'utf8')), fs.existsSync(overrideFile) ? parseAnswers(fs.readFileSync(overrideFile, 'utf8')) : {});
+// Prefer the ATS-named copies from build-pdf (files.json); thresholds.tailor.upload picks pdf or docx.
 const files = {};
-for (const [k, f] of [['resume', 'cv.pdf'], ['cover_letter', 'cover.pdf']]) { const p = path.join(dir, f); if (fs.existsSync(p)) files[k] = p; }
+const namedFiles = fs.existsSync(path.join(dir, 'files.json')) ? JSON.parse(fs.readFileSync(path.join(dir, 'files.json'), 'utf8')) : {};
+const uploadExt = (th.tailor ?? {}).upload ?? 'pdf';
+for (const [k, kind] of [['resume', 'cv'], ['cover_letter', 'cover']]) {
+  for (const f of [namedFiles[`${kind}.${uploadExt}`], namedFiles[`${kind}.pdf`], `${kind}.${uploadExt}`, `${kind}.pdf`]) {
+    const p = f && path.join(dir, f); if (p && fs.existsSync(p)) { files[k] = p; break; }
+  }
+}
 
 // ---- browser ----
 const job = { url: row.url, company: row.company, title: row.title };

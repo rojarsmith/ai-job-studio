@@ -12,6 +12,7 @@ import { readPipeline, writePipeline, transition } from '../lib/pipeline.mjs';
 import { readReport, writeReport } from '../lib/report.mjs';
 import { checkPdf } from '../lib/pdf.mjs';
 import { parseReview, setMaterials, listApplications } from '../lib/tailor.mjs';
+import { checkApplication } from '../lib/ats.mjs';
 
 const args = process.argv.slice(2);
 const id = args.find((a) => /^\d{3,}$/.test(a));
@@ -22,7 +23,7 @@ if (args.includes('--list')) {
   for (const nnn of listApplications(P.applications)) {
     const row = rowFor(nnn);
     const dir = path.join(P.applications, nnn);
-    const have = ['cv.md', 'cover.md', 'review.md', 'cv.pdf', 'cover.pdf', 'answers.md'].filter((f) => fs.existsSync(path.join(dir, f)));
+    const have = ['cv.md', 'cover.md', 'review.md', 'cv.pdf', 'cover.pdf', 'cv.docx', 'answers.md'].filter((f) => fs.existsSync(path.join(dir, f)));
     console.log(`${nnn}  ${row?.state ?? '?'}  ${row?.company ?? ''} — ${row?.title ?? ''}  [${have.join(' ')}]`);
   }
   process.exit(0);
@@ -51,11 +52,18 @@ for (const [f, max, kind] of [['cv.pdf', th.cv_max_pages ?? 2, 'cv'], ['cover.pd
   problems.push(...r.problems);
 }
 if (!fs.existsSync(P.answers)) problems.push('source/answers.md missing (run tailor-prep)');
+const rep = readReport(row.report);
+const ats = checkApplication(dir, { reportBody: rep.body, thresholds: th, fs, path, parseReview });
+problems.push(...ats.problems);
+const named = fs.existsSync(path.join(dir, 'files.json')) ? JSON.parse(fs.readFileSync(path.join(dir, 'files.json'), 'utf8')) : {};
+if (!named['cv.pdf']) problems.push('no ATS-named copy (run build-pdf)');
 
 console.log(`[tailor-apply] ${id}  ${row.company} — ${row.title}  state=${row.state}`);
 console.log(`[tailor-apply] review: ${review.rows.length} keywords, ${review.rows.filter((r) => r.verdict === 'supported').length} supported, ${review.gaps.length} gaps, ${review.rows.filter((r) => r.verdict === 'removed').length} removed; verdict=${review.verdict}`);
 if (review.gaps.length) console.log(`[tailor-apply] gaps: ${review.gaps.join(', ')}`);
 for (const [f, r] of Object.entries(checks)) for (const n of r.notes) console.log(`[tailor-apply] ${n}`);
+for (const n of ats.notes) console.log(`[tailor-apply] ${n}`);
+if (named['cv.pdf']) console.log(`[tailor-apply] upload as: ${Object.values(named).join(', ')}`);
 for (const p of problems) console.error(`[tailor-apply] PROBLEM ${p}`);
 
 if (!args.includes('--ok')) {
@@ -65,14 +73,15 @@ if (!args.includes('--ok')) {
 if (problems.length) { console.error('[tailor-apply] refusing to approve with open problems'); process.exit(1); }
 if (row.state !== 'scored') { console.error(`[tailor-apply] row is ${row.state}, expected scored`); process.exit(1); }
 
-const rep = readReport(row.report);
 rep.body = setMaterials(rep.body, `- approved: ${today()}
 - folder: applications/${id}/
 - cv.pdf: ${checks['cv.pdf'].pages} page(s)
 - cover.pdf: ${checks['cover.pdf'].pages} page(s)
-- keywords: ${review.rows.length} (${review.gaps.length} gaps: ${review.gaps.join(', ') || 'none'})`);
+- keywords: ${review.rows.length} (${review.gaps.length} gaps: ${review.gaps.join(', ') || 'none'})
+- keyword coverage: ${ats.cv ? `${ats.cv.coverage.hit.length}/${ats.cv.coverage.total}` : 'n/a'}
+- files: ${Object.values(named).join(', ') || 'cv.pdf, cover.pdf'}`);
 rep.front.tailored_at = today();
 writeReport(row.report, rep);
-transition(row, 'tailored', `human ok; gaps=${review.gaps.length}`);
+transition(row, 'tailored', `human ok; gaps=${review.gaps.length}; coverage=${ats.cv ? Math.round(ats.cv.coverage.ratio * 100) : 'na'}%`);
 writePipeline(pipeline);
 console.log(`[tailor-apply] ${id} → tailored`);

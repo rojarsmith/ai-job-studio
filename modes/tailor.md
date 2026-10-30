@@ -13,7 +13,7 @@ Workspace: `node scripts/workspace.mjs path`. Targets: `node scripts/tailor-prep
 
 ## Drafter
 
-Write `applications/NNN/cv.md` and `applications/NNN/cover.md` in the markdown shape described in `templates/README.md` (H1 name, contact line, H2 sections, H3 roles with a meta line, bullets with numbers).
+Write `applications/NNN/cv.md` and `applications/NNN/cover.md` in the markdown shape described in `templates/README.md` (H1 name, contact line, H2 sections, H3 roles with a meta line, bullets with numbers). `node scripts/ats-check.mjs NNN` tells you what an ATS parser will reject; run it after drafting and fix every PROBLEM line.
 
 Rules:
 1. Reorder and reword `cv.md` content to match the posting. Never invent a skill, employer, date, title, degree or number. Every bullet must be traceable to a line in `cv.md`.
@@ -22,6 +22,8 @@ Rules:
 4. Cover letter: 3 to 4 short paragraphs; why them, two concrete matches with evidence, one honest gap framed as a learning plan, close. No flattery.
 5. Fill the free-text drafts in `generated/applications/NNN/answers.md`. Never edit `source/answers.md` or lines marked `needs_confirmation`.
 6. Keep the same language as the posting unless `profile.yml` says otherwise.
+7. ATS shape: H2 headings only from Summary / Skills / Experience / Education / Certifications / Projects / Publications / Languages / Awards (or their zh-TW forms). Every role `### Company — Title` with a date line `YYYY-MM to YYYY-MM|present`, one format throughout, newest first. No tables, images, HTML, emoji or columns.
+8. Every keyword the reviewer will mark `supported` must appear verbatim (or by common alias: k8s ↔ Kubernetes) in `cv.md`. `ats-check` fails the draft otherwise.
 
 ## Reviewer (fresh context)
 
@@ -54,7 +56,8 @@ verdict: pass
 ## Then
 
 ```bash
-node scripts/build-pdf.mjs NNN        # compile + automatic gate (pages, text layer, contact info, reading order)
+node scripts/ats-check.mjs NNN        # sections, dates, layout, keyword coverage; no Chrome
+node scripts/build-pdf.mjs NNN        # ats-check again, compile PDF + DOCX, PDF gate (pages, text layer, contact info, reading order), named copies
 node scripts/tailor-apply.mjs NNN     # prints the summary for the human; the human approves with --ok
 ```
 
