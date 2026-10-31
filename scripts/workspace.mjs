@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 // Manage the private workspace.
 //   node scripts/workspace.mjs init    [--workspace <dir>] [--from-git <url>]   create / complete from examples/
-//   node scripts/workspace.mjs path    [source|generated|runtime]               print resolved workspace (or tier) path
+//   node scripts/workspace.mjs path    [original|source|generated|runtime]      print resolved workspace (or tier) path
 //   node scripts/workspace.mjs check                                            diagnose layout and git safety
-//   node scripts/workspace.mjs migrate [--dry-run]                              move a flat (pre-tier) workspace into source/ generated/ runtime/
+//   node scripts/workspace.mjs lock    [--force]                                hash + make read-only everything in original/
+//   node scripts/workspace.mjs migrate [--dry-run]                              move a flat (pre-tier) workspace into original/ source/ generated/ runtime/
 import path from 'node:path';
-import { resolveWorkspace, initWorkspace, checkWorkspace, migrateWorkspace, TIERS } from '../lib/workspace.mjs';
+import { resolveWorkspace, initWorkspace, checkWorkspace, migrateWorkspace, lockOriginals, TIERS } from '../lib/workspace.mjs';
 
 const args = process.argv.slice(2);
 const positional = args.filter((a, i) => !a.startsWith('--') && !['--workspace', '--from-git'].includes(args[i - 1]));
@@ -30,12 +31,15 @@ if (cmd === 'path') {
   report(r);
   console.log(r.ok ? '[workspace] OK' : '[workspace] NOT OK');
   process.exit(r.ok ? 0 : 1);
+} else if (cmd === 'lock') {
+  const r = lockOriginals(dir, { force: args.includes('--force') });
+  console.log(`[workspace] locked ${r.locked.length} file(s) in original/ (${r.added.length} new, ${r.accepted.length} changed accepted)`);
 } else if (cmd === 'migrate') {
   const dry = args.includes('--dry-run');
   const moves = migrateWorkspace(dir, { dryRun: dry });
   for (const [from, to] of moves) console.log(`[workspace] ${dry ? 'would move' : 'moved'} ${from} -> ${to}`);
   if (!dry) { console.log(`[workspace] migrated ${dir}; .gitignore rewritten`); report(checkWorkspace(dir)); }
 } else {
-  console.error('usage: node scripts/workspace.mjs <init|path [tier]|check|migrate [--dry-run]> [--workspace <dir>] [--from-git <url>]');
+  console.error('usage: node scripts/workspace.mjs <init|path [tier]|check|lock|migrate [--dry-run]> [--workspace <dir>] [--from-git <url>]');
   process.exit(2);
 }

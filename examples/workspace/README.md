@@ -5,6 +5,8 @@
 ```
 <workspace>/
   .gitignore            written by init; ignores runtime/ and *.log
+  original/             YOUR hand-written raw material (bullet-list CV, notes); frozen, nothing writes here
+    .lock.json          written by `workspace.mjs lock`: SHA-256 per file; files become read-only
   source/               YOU write; code and modes only read
     cv.md               the only evidence source for your skills and history (English; template with rules in comments)
     cv.<lang>.md        optional translation with identical facts (cv.zh-TW.md); modes use it when the posting is in that language
@@ -29,10 +31,11 @@
 
 Rules the code enforces or assumes:
 
+- `original/` is never a write target: `writeGuarded` refuses it. `workspace.mjs lock` hashes its files and sets them read-only; `check` fails when a locked file changes or disappears (`lock --force` accepts an intentional edit). `writeGuarded` also refuses to replace an existing `source/` file.
 - `source/profile.yml`, `source/portals.yml`, `source/cv.md` are required; `workspace.mjs check` fails without them.
 - Optional `source/*.yml` fall back to the copies in this folder, or to empty defaults when there is no copy (browser, sites).
 - `generated/applications/NNN/answers.md` overrides `source/answers.md` key by key; empty values do not override.
 - `runtime/` is ignored by the workspace `.gitignore`; `check` fails if a git-managed workspace stops ignoring it.
 - A pre-tier workspace (config/, data/ at top level) is refused; `workspace.mjs migrate --dry-run` shows the moves, `migrate` does them.
 
-Backing up: `source/` is the part you cannot regenerate. `generated/` can be rebuilt by re-running the loop. `runtime/` should never be backed up.
+Backing up: `original/` and `source/` are the parts you cannot regenerate. `generated/` can be rebuilt by re-running the loop. `runtime/` should never be backed up.

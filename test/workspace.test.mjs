@@ -64,3 +64,26 @@ test('migrate moves a flat workspace into tiers, never overwrites, and check ref
   assert.match(fs.readFileSync(path.join(dir, '.gitignore'), 'utf8'), /^runtime\/$/m);
   assert.throws(() => migrateWorkspace(dir), /not a flat/);
 });
+test('original/ tier: lock records hashes, check catches edits, writeGuarded refuses original and source overwrites', async () => {
+  const { lockOriginals, verifyOriginals, writeGuarded } = await import('../lib/workspace.mjs');
+  const dir = path.join(tmp, 'ws-orig');
+  initWorkspace(dir);
+  assert.ok(fs.statSync(path.join(dir, 'original')).isDirectory());
+  fs.writeFileSync(path.join(dir, 'original', 'resume.md'), '- shipped x');
+  let r = checkWorkspace(dir, { root: path.join(tmp, 'repo') });
+  assert.ok(r.notes.some((n) => /not locked yet/.test(n)));
+  lockOriginals(dir);
+  assert.deepEqual(verifyOriginals(dir), { changed: [], missing: [], unlocked: [] });
+  fs.chmodSync(path.join(dir, 'original', 'resume.md'), 0o666);
+  fs.writeFileSync(path.join(dir, 'original', 'resume.md'), '- edited');
+  r = checkWorkspace(dir, { root: path.join(tmp, 'repo') });
+  assert.ok(r.problems.some((p) => /resume\.md changed/.test(p)));
+  assert.throws(() => lockOriginals(dir), /changed since/);
+  lockOriginals(dir, { force: true });
+  assert.deepEqual(verifyOriginals(dir).changed, []);
+  assert.throws(() => writeGuarded(dir, path.join(dir, 'original', 'x.md'), 'x'), /original/);
+  assert.throws(() => writeGuarded(dir, path.join(dir, 'source', 'cv.md'), 'x'), /overwrite/);
+  writeGuarded(dir, path.join(dir, 'source', 'new.md'), 'ok');
+  writeGuarded(dir, path.join(dir, 'generated', 'a.md'), 'ok');
+  assert.equal(fs.readFileSync(path.join(dir, 'source', 'new.md'), 'utf8'), 'ok');
+});

@@ -6,7 +6,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { loadConfig } from '../lib/config.mjs';
-import { P } from '../lib/paths.mjs';
+import { P, WS } from '../lib/paths.mjs';
+import { writeGuarded } from '../lib/workspace.mjs';
 import { readPipeline } from '../lib/pipeline.mjs';
 import { readReport } from '../lib/report.mjs';
 import { answersSkeleton, answersOverrideSkeleton } from '../lib/tailor.mjs';
@@ -17,7 +18,7 @@ const limit = Number(opt('--limit')) || Infinity;
 const onlyId = opt('--id');
 const profile = loadConfig('profile');
 const { rows } = readPipeline();
-if (!fs.existsSync(P.answers)) { fs.writeFileSync(P.answers, answersSkeleton(profile)); console.log(`[tailor-prep] created ${P.answers} from profile.yml; review it once`); }
+if (!fs.existsSync(P.answers)) { writeGuarded(WS, P.answers, answersSkeleton(profile)); console.log(`[tailor-prep] created ${P.answers} from profile.yml; review it once`); }
 
 let created = 0, existing = 0;
 const targets = rows.filter((r) => r.state === 'scored' && r.report).slice(0, limit);

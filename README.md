@@ -152,15 +152,16 @@ Ways to keep it private, all equivalent to the code:
 - **Encrypted or synced drive** — point `JOB_WORKSPACE` or `.workspace` at it.
 - **Anything else** — mount, decrypt, or generate a directory with the layout; nothing in the code assumes where it came from.
 
-Inside the workspace, three tiers with one rule each (details in [examples/workspace/README.md](examples/workspace/README.md)):
+Inside the workspace, four tiers with one rule each (details in [examples/workspace/README.md](examples/workspace/README.md)):
 
 | Tier | Holds | Who writes | Back up / commit? |
 | --- | --- | --- | --- |
+| `original/` | hand-written raw material you never want rewritten (bullet-list CV, notes) | you | yes |
 | `source/` | `cv.md` (+ `cv.<lang>.md` translations), `profile.yml`, `portals.yml`, `thresholds.yml`, `blacklist.yml`, `browser.yml`, `sites.yml`, `answers.md`, `templates/` | you | yes |
 | `generated/` | `reports/`, `applications/NNN/`, `data/` (pipeline, tracker, logs), `retro/` | scripts and modes | optional; delete it to restart with your settings intact |
 | `runtime/` | `secrets/`, `profiles/` (browser sessions), `*.log` | scripts | never; the workspace `.gitignore` excludes it |
 
-Code and modes treat `source/` as read-only. The one exception is `tailor-prep`, which creates `source/answers.md` from `profile.yml` if it is missing and never touches it again.
+Code and modes never write into `original/`; `workspace.mjs lock` records a SHA-256 per file, makes them read-only, and `check` fails if one changes. Derive `source/cv.md` from it once with AI, then edit `source/` freely. Code and modes treat `source/` as read-only. The one exception is `tailor-prep`, which creates `source/answers.md` from `profile.yml` if it is missing and never touches it again.
 
 `node scripts/workspace.mjs check` fails if the workspace sits inside this repo without being ignored, is a git repo without ignoring `runtime/`, or still uses the pre-tier flat layout (`node scripts/workspace.mjs migrate` moves it; `--dry-run` shows the plan). `workspace.mjs path generated` prints a tier path for scripts and modes.
 
