@@ -16,6 +16,7 @@
     blacklist.yml       companies and title patterns to skip (optional)
     browser.yml         Chrome binary, attach mode, auto-login flags, credential providers (optional)
     sites.yml           per-site selector overrides for login / apply pages (optional)
+    redact.yml          text that must never reach a public profile or a sent resume: drop_lines / remove / forbid (optional)
     answers.md          facts the form filler may type, shared by every application (created once by tailor-prep)
     templates/          resume.css / cover.css overrides by file name (optional)
   generated/            scripts and modes write; safe to delete to restart

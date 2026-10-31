@@ -157,7 +157,7 @@ Inside the workspace, four tiers with one rule each (details in [examples/worksp
 | Tier | Holds | Who writes | Back up / commit? |
 | --- | --- | --- | --- |
 | `original/` | hand-written raw material you never want rewritten (bullet-list CV, notes) | you | yes |
-| `source/` | `cv.md` (+ `cv.<lang>.md` translations), `profile.yml`, `portals.yml`, `thresholds.yml`, `blacklist.yml`, `browser.yml`, `sites.yml`, `answers.md`, `templates/` | you | yes |
+| `source/` | `cv.md` (+ `cv.<lang>.md` translations), `profile.yml`, `portals.yml`, `thresholds.yml`, `blacklist.yml`, `browser.yml`, `sites.yml`, `redact.yml`, `answers.md`, `templates/` | you | yes |
 | `generated/` | `reports/`, `applications/NNN/`, `data/` (pipeline, tracker, logs), `retro/` | scripts and modes | optional; delete it to restart with your settings intact |
 | `runtime/` | `secrets/`, `profiles/` (browser sessions), `*.log` | scripts | never; the workspace `.gitignore` excludes it |
 
@@ -178,6 +178,10 @@ By default every site gets its own persistent Chrome profile under `runtime/prof
 
 Patchright then attaches over CDP; nothing about the browser's fingerprint changes because it is literally your Chrome. `node scripts/tabs.mjs` lists the open tabs; `--scroll` reads each one with uneven mouse-wheel steps and pauses and reports headings, text size and whether the page looks like a job list. It never clicks, types or writes. A Chrome started without the port cannot be attached to afterwards; the scripts fail with a clear message instead of restarting it.
 
+### Keeping profiles on job sites current
+
+`node scripts/resume-pdf.mjs` renders `source/cv*.md` to ATS-named PDFs (`<Name>-<Title>-CV.pdf`, one per language) after applying `source/redact.yml`, the list of things you never want published (lines to drop, clauses to cut, patterns that must not survive). `modes/profile-sync.md` walks a site's profile page in your attached Chrome through `node scripts/tab-run.mjs` and tells you which documents it wanted that `original/` does not have. What is known about each site (selectors, limits, dead ends) lives in [docs/sites/](docs/sites/README.md); every run reads the note first and writes back what it learned, so the next run does not pay for the same exploration.
+
 ## Layout
 
 ```
@@ -185,7 +189,7 @@ adapters/     greenhouse.mjs 104.mjs      L2: search / detail / isLive now; fill
 browser/      launch.mjs session.mjs wait-human.mjs   L1: Patchright + real Chrome, per-site profile or CDP attach, ensureLoggedIn, wait_human
 lib/          state pipeline dedup blacklist report scoring tailor pdf http browser-fetch workspace profile credentials sessions answers knockout form tracker login followups retro
 modes/        score tailor followup interview debrief retro    L4: prompts run inside Claude Code / Codex
-scripts/      workspace discover score-prep score-apply tailor-prep ats-check build-pdf tailor-apply tabs prepare apply track followup outcome retro status daily.ps1 weekly.ps1
+scripts/      workspace discover score-prep score-apply tailor-prep ats-check build-pdf resume-pdf tailor-apply tabs tab-run prepare apply track followup outcome retro status daily.ps1 weekly.ps1
 templates/    resume.css cover.css        default stylesheets; <workspace>/source/templates/ overrides by file name
 examples/     workspace/                  templates copied by `workspace init`; the only config in this repo
 test/         node --test

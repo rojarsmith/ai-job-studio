@@ -16,6 +16,8 @@ Job = { url, company, title, source, location?, salary?, posted?, external_id? }
 JobDetail = Job & { description, requirements?, meta? }
 ```
 
+Per-site profile and form knowledge (selectors, limits, dead ends) is kept in [../docs/sites/](../docs/sites/README.md); update it whenever a run teaches something.
+
 ## What belongs in this repo
 
 This repo is public and meant to be reused anywhere in the world, so it holds only what is true for every user:

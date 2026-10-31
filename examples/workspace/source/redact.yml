@@ -1,0 +1,14 @@
+# Text that must never appear on a public profile or in a resume file you send out (optional).
+# Applied by scripts/resume-pdf.mjs and by modes/profile-sync.md. Regular expressions, case-insensitive.
+
+# A line that matches is removed whole (a Markdown list item is one line).
+drop_lines:
+  - '^- Confidential customer evaluations'
+
+# The matched text is cut out of a longer line.
+remove:
+  - ', with customers under NDA'
+
+# After redaction none of these may remain; the tool stops instead of publishing.
+forbid:
+  - 'customer under NDA'
