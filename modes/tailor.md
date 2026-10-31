@@ -7,7 +7,7 @@ Workspace: `node scripts/workspace.mjs path`. Targets: `node scripts/tailor-prep
 ## Inputs (per application NNN)
 
 - `<workspace>/generated/reports/NNN-*.md` — job text, score, knock-outs, existing `## Gaps`.
-- `<workspace>/source/cv.md` — the only evidence. A fact that is not here does not exist.
+- `<workspace>/source/cv.md` — the only evidence. A fact that is not here does not exist. If the posting is in another language and `source/cv.<lang>.md` exists (for example `cv.zh-TW.md`), draft from that file; the facts are the same, the wording is already in the right language.
 - `<workspace>/source/profile.yml` — contact line, location, languages.
 - `<workspace>/source/answers.md` — shared facts (read only). `<workspace>/generated/applications/NNN/answers.md` — per-job override created by tailor-prep; the only answers file you write.
 

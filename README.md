@@ -48,7 +48,7 @@ Tailoring (S3), per application:
 ```bash
 node scripts/tailor-prep.mjs       # S3a  generated/applications/NNN/ (brief + per-job answers override) for every scored apply/maybe row; creates source/answers.md once
 #                                    S3b  in Claude Code: run modes/tailor.md → cv.md, cover.md, review.md (drafter, then a fresh reviewer)
-node scripts/ats-check.mjs NNN     # S3c  no Chrome: standard sections, one date format newest-first, no tables/images, keyword coverage vs review.md
+node scripts/ats-check.mjs NNN     # S3c  no Chrome (--file <md> checks any file, e.g. source/cv.md): standard sections, one date format newest-first, no tables/images, keyword coverage vs review.md
 node scripts/build-pdf.mjs NNN     # S3d  ats-check, then Chrome → cv.pdf/cover.pdf + cv.docx/cover.docx; gate: ≤2 / ≤1 pages, contact in text layer, name first;
 #                                          writes ATS-named copies <Name>-<Title>-CV.pdf (files.json)
 node scripts/tailor-apply.mjs NNN  # S3e  shows reviewer summary + all checks; you read, then approve with --ok → state tailored
@@ -156,7 +156,7 @@ Inside the workspace, three tiers with one rule each (details in [examples/works
 
 | Tier | Holds | Who writes | Back up / commit? |
 | --- | --- | --- | --- |
-| `source/` | `cv.md`, `profile.yml`, `portals.yml`, `thresholds.yml`, `blacklist.yml`, `browser.yml`, `sites.yml`, `answers.md`, `templates/` | you | yes |
+| `source/` | `cv.md` (+ `cv.<lang>.md` translations), `profile.yml`, `portals.yml`, `thresholds.yml`, `blacklist.yml`, `browser.yml`, `sites.yml`, `answers.md`, `templates/` | you | yes |
 | `generated/` | `reports/`, `applications/NNN/`, `data/` (pipeline, tracker, logs), `retro/` | scripts and modes | optional; delete it to restart with your settings intact |
 | `runtime/` | `secrets/`, `profiles/` (browser sessions), `*.log` | scripts | never; the workspace `.gitignore` excludes it |
 

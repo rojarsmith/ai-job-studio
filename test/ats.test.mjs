@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { mentions, extractKeywords, keywordCoverage, parseCv, checkSections, checkRoles, checkLayout, atsCheck, atsFileName, postingText, checkApplication, dateFormOf } from '../lib/ats.mjs';
-import { markdownToDocxBuffer, markdownToDocx, docxText, zip, unzip, runs } from '../lib/docx.mjs';
+import { mentions, extractKeywords, keywordCoverage, parseCv, checkSections, checkRoles, checkLayout, atsCheck, atsFileName, postingText, checkApplication, dateFormOf, sectionKey } from '../lib/ats.mjs';
+import { markdownToDocxBuffer, markdownToDocx, markdownToDocumentXml, docxText, zip, unzip, runs } from '../lib/docx.mjs';
 import { parseReview } from '../lib/tailor.mjs';
 
 const GOOD = `# Lin Mei
@@ -95,9 +95,19 @@ test('checkRoles: heading shape, date range, one format, reverse order, end >= s
   assert.ok(p.some((x) => /no date line/.test(x)));
   const backwards = parseCv('# A\na@b.c\n## Experience\n### Acme — Dev\n2022-03 to 2021-01\n- a\n');
   assert.ok(checkRoles(backwards).problems.some((x) => /end date before start/.test(x)));
+  const zhNow = parseCv('# 林美\na@b.c\n## 工作經歷\n### 甲公司 — 工程師\n2017-01 至今 · 高雄\n- a\n### 乙公司 — 工程師\n2015-01 至 2016-10 · 台南\n- b\n');
+  assert.deepEqual(checkRoles(zhNow).problems, []);
+  const hyphen = parseCv('# A\na@b.c\n## Experience\n### Acme — Dev\n2021-03 - 2022-01\n- a\n### Beta — Dev\n2021-01 - 2021-02\n- b\n');
+  assert.deepEqual(checkRoles(hyphen).problems, []);   // month precision: 2021-03 is after 2021-01
   const years = parseCv('# A\na@b.c\n## Experience\n### Acme — Dev\n2020 - 2022\n- a\n');
   assert.deepEqual(checkRoles(years).problems, []);
   assert.ok(checkRoles(years).notes.some((n) => /year-only/.test(n)));
+});
+test('html comments are ignored by parseCv and the docx writer; patents is a publications alias', () => {
+  const cv = parseCv('<!-- guidance: keep facts -->\n# A\na@b.c\n<!-- | not a table | -->\n## Skills\nGo\n');
+  assert.equal(cv.tables, 0); assert.equal(cv.name, 'A');
+  assert.doesNotMatch(markdownToDocumentXml('# A\n<!-- hidden -->\ntext\n'), /hidden/);
+  assert.equal(sectionKey('專利'), 'publications');
 });
 test('checkLayout flags tables, images, html, emoji', () => {
   const r = checkLayout(parseCv('# A\n| a | b |\n![x](y)\n<table>\n✅ done\n'));

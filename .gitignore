@@ -1,6 +1,6 @@
 node_modules/
 # Private workspace (default location) and the pointer file to an external one. See examples/workspace/README.md.
-workspace/
+/workspace/
 .workspace
 # Belt and braces: session data must never land in this repo even if misplaced.
 profiles/

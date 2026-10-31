@@ -6,7 +6,7 @@ You are the scorer in a job-search loop. You only write text files. You never op
 
 All paths below are inside the private workspace. Find it first: `node scripts/workspace.mjs path`.
 
-- `<workspace>/source/cv.md` — the only evidence source for the candidate's skills and history.
+- `<workspace>/source/cv.md` — the only evidence source for the candidate's skills and history. `source/cv.<lang>.md` (for example `cv.zh-TW.md`) is the same evidence translated; read whichever matches the posting's language.
 - `<workspace>/source/profile.yml` — target titles, seniority, location, remote preference, salary floor, deal-breakers.
 - `<workspace>/generated/reports/*.md` whose frontmatter has `score: null` — one job per file. The job text is under `## Job description` and `## Requirements`.
 

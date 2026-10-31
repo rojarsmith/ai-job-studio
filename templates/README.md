@@ -22,6 +22,8 @@ email · phone · city · linkedin-or-site        ← first paragraph after the 
 ## Education
 ```
 
+`examples/workspace/source/cv.md` and `cv.zh-TW.md` are full templates in this shape with the rules as comments; `node scripts/ats-check.mjs --file <path>` checks any markdown file, including your `source/cv.md`, before tailoring starts.
+
 ATS text checks (`scripts/ats-check.mjs`, also run inside `build-pdf` and `tailor-apply`) read the markdown, not the PDF:
 
 - H2 headings must be standard names: Summary, Skills, Experience, Education, Certifications, Projects, Publications, Languages, Awards (zh-TW: 摘要, 技能, 工作經歷, 學歷, 證照, 專案 …). Skills and Experience are required.
