@@ -166,6 +166,17 @@ Code and modes treat `source/` as read-only. The one exception is `tailor-prep`,
 
 Settings that are machine-specific (Chrome binary, CDP port) live in `source/browser.yml`, not in code.
 
+### Attach mode
+
+By default every site gets its own persistent Chrome profile under `runtime/profiles/<site>` (mode A). If you would rather keep using a Chrome you opened yourself, with your own tabs and logins (mode B), start that Chrome with a debugging port and set `attach: cdp` in `source/browser.yml`:
+
+```powershell
+# Chrome must not already be running from this user-data-dir; close it first (tabs come back via --restore-last-session).
+& "C:\path\to\chrome.exe" --user-data-dir="C:\path\to\profile" --remote-debugging-port=9222 --restore-last-session
+```
+
+Patchright then attaches over CDP; nothing about the browser's fingerprint changes because it is literally your Chrome. `node scripts/tabs.mjs` lists the open tabs; `--scroll` reads each one with uneven mouse-wheel steps and pauses and reports headings, text size and whether the page looks like a job list. It never clicks, types or writes. A Chrome started without the port cannot be attached to afterwards; the scripts fail with a clear message instead of restarting it.
+
 ## Layout
 
 ```
@@ -173,7 +184,7 @@ adapters/     greenhouse.mjs 104.mjs      L2: search / detail / isLive now; fill
 browser/      launch.mjs session.mjs wait-human.mjs   L1: Patchright + real Chrome, per-site profile or CDP attach, ensureLoggedIn, wait_human
 lib/          state pipeline dedup blacklist report scoring tailor pdf http browser-fetch workspace profile credentials sessions answers knockout form tracker login followups retro
 modes/        score tailor followup interview debrief retro    L4: prompts run inside Claude Code / Codex
-scripts/      workspace discover score-prep score-apply tailor-prep ats-check build-pdf tailor-apply prepare apply track followup outcome retro status daily.ps1 weekly.ps1
+scripts/      workspace discover score-prep score-apply tailor-prep ats-check build-pdf tailor-apply tabs prepare apply track followup outcome retro status daily.ps1 weekly.ps1
 templates/    resume.css cover.css        default stylesheets; <workspace>/source/templates/ overrides by file name
 examples/     workspace/                  templates copied by `workspace init`; the only config in this repo
 test/         node --test
