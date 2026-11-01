@@ -19,3 +19,4 @@ Verified live 2026-11-01. This is the candidate account that Greenhouse job boar
 - **Cost**: about 3 s per board list, about 1.5 s per detail; a hundred and fifty postings take around five minutes through `score-prep.mjs`.
 - **Location strings** are free text and often list many cities ("Remote - US; Remote - India"). A remote role that names only countries other than yours, or says "US" for someone without US work authorization, fails the location test.
 - **Noise**: a keyword such as "director" or "head of" brings sales, design, data-science and product-management roles; set `title_include` / `title_exclude` on the source.
+- **Singapore postings are on-site**: a location filter of "singapore" returned only on-site Singapore roles, never a remote one. Remote-Singapore searches need another source.
