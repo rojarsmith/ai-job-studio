@@ -22,6 +22,7 @@ For each report with `score: null`:
    - `compensation` — stated or inferable pay vs profile salary floor. Unknown = 3.
    - `red_flags` — 5 = none, 3 = minor (vague scope, long unpaid test), 1 = serious (unpaid, commission only, staffing bait, mass-posted).
 3. If any `deal_breakers` entry from `profile.yml` clearly applies, set `deal_breaker` to that string and `score: 1`. Otherwise `deal_breaker: null`.
+   If `profile.yml` has `must_have` entries, each one is a hard requirement (for example the listing venue, allowed cities). A posting that fails any of them gets overall ≤ 2 and the failed entry under knock-outs; if the report cannot show whether it holds (is the employer listed?), say "unverified" and cap at 3.
 4. Overall `score` = your judgement, integer 1 to 5, normally within one point of the rounded mean of the five. Skills and red_flags dominate.
 5. `action`: `apply` if score ≥ 4, `maybe` if 3, else `skip`. (`scripts/score-apply.mjs` re-checks this against `source/thresholds.yml`.)
 6. Write the frontmatter fields: `score`, `action`, `scores.{skills,seniority,location,compensation,red_flags}`, `deal_breaker`, `scored_by: llm`, `scored_at: <ISO time>`.
