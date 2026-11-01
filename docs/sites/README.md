@@ -10,6 +10,7 @@ Selectors, field names, limits, quirks, working recipes and **dead ends**. Publi
 | 104 人力銀行 (104.com.tw) | [104.md](104.md) |
 | Cake (cake.me) | [cake.md](cake.md) |
 | LinkedIn | [linkedin.md](linkedin.md) |
+| MyGreenhouse (my.greenhouse.io) | [greenhouse.md](greenhouse.md) |
 
 ## Rules for whoever touches a site (human or `modes/profile-sync.md`)
 
