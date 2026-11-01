@@ -12,6 +12,7 @@ import { adapterFor, adapterForUrl } from '../adapters/index.mjs';
 import { OPEN_PRE_APPLY } from '../lib/state.mjs';
 import { politeDelay } from '../lib/http.mjs';
 import { makeTitleFilter } from '../lib/titlefilter.mjs';
+import { listedCheck } from '../lib/listed.mjs';
 
 const args = process.argv.slice(2);
 const opt = (k) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : undefined; };
@@ -25,15 +26,16 @@ const pipeline = readPipeline();
 const date = today();
 const summary = { found: 0, new: 0, dup: 0, blacklisted: 0, closed: 0, errors: 0 };
 
-// --rescreen: no search. Re-apply title_include / title_exclude to rows that are still "discovered" without a report
+// --rescreen: no search. Re-apply title_include / title_exclude and require_listed to rows that are still "discovered" without a report
 // (use after tightening the screen), and drop the ones that no longer pass.
 if (flag('--rescreen')) {
   let dropped = 0;
   for (const [source, cfg] of Object.entries(portals.sources ?? {})) {
     if (only && only !== source) continue;
     const titleOk = makeTitleFilter(cfg);
+    const listedOk = cfg.require_listed === 'tw' ? await listedCheck() : () => true;
     const before = pipeline.rows.length;
-    pipeline.rows = pipeline.rows.filter((r) => !(r.source === source && r.state === 'discovered' && !r.report && !titleOk(r.title)));
+    pipeline.rows = pipeline.rows.filter((r) => !(r.source === source && r.state === 'discovered' && !r.report && !(titleOk(r.title) && listedOk(r.company))));
     dropped += before - pipeline.rows.length;
   }
   if (!dry) writePipeline(pipeline);
@@ -49,9 +51,11 @@ for (const [source, cfg] of Object.entries(portals.sources ?? {})) {
   catch (e) { summary.errors++; console.error(`[discover] ${source} failed: ${e.message}`); continue; }
   let added = 0, screened = 0;
   const titleOk = makeTitleFilter(cfg);
+  const listedOk = cfg.require_listed === 'tw' ? await listedCheck() : () => true;
   for (const job of jobs) {
     summary.found++;
     if (!titleOk(job.title)) { screened++; summary.screened = (summary.screened ?? 0) + 1; continue; }
+    if (!listedOk(job.company)) { screened++; summary.notListed = (summary.notListed ?? 0) + 1; continue; }
     const bl = blacklistReason(job);
     if (bl) { summary.blacklisted++; continue; }
     const dup = isDuplicate(job, pipeline.rows);
@@ -63,7 +67,7 @@ for (const [source, cfg] of Object.entries(portals.sources ?? {})) {
   summary.new += added;
   const query = source === 'greenhouse' ? `boards=${(cfg.boards ?? []).join(',')} kw=${(cfg.keywords ?? []).join('/')}` : `kw=${(cfg.keywords ?? []).join('/')} areas=${(cfg.areas ?? []).join(',')}`;
   if (!dry) appendTsv(P.data('scan-history.tsv'), ['date', 'source', 'query', 'found', 'new', 'duration_ms'], { date, source, query, found: jobs.length, new: added, duration_ms: Date.now() - t0 });
-  console.log(`[discover] ${source}: found=${jobs.length} new=${added}${screened ? ` title-screened=${screened}` : ''} (${Date.now() - t0} ms)`);
+  console.log(`[discover] ${source}: found=${jobs.length} new=${added}${screened ? ` screened=${screened}` : ''} (${Date.now() - t0} ms)`);
 }
 
 if (flag('--recheck') || flag('--recheck-all')) {

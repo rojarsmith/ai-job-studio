@@ -21,6 +21,10 @@ export function parseJobUrl(url) {
   return null;
 }
 
+// Many employers publish a custom career-site URL (…?gh_jid=123) that carries no board token, so detail() could not
+// find the posting again. Keep the greenhouse.io URL when absolute_url is one, otherwise build it from board and id.
+export const canonicalUrl = (board, j) => BOARD_URL.test(j.absolute_url ?? '') ? j.absolute_url : `https://boards.greenhouse.io/${board}/jobs/${j.id}`;
+
 export async function search(cfg) {
   const out = [];
   for (const board of cfg.boards ?? []) {
@@ -29,7 +33,7 @@ export async function search(cfg) {
       if (!matchAny(j.title, cfg.keywords)) continue;
       if (!matchAny(locationOf(j), cfg.locations)) continue;
       out.push({
-        url: j.absolute_url,
+        url: canonicalUrl(board, j),
         company: j.company_name || board,
         title: j.title,
         source: name,

@@ -32,6 +32,8 @@ sources:
       - 6001002000
     max_pages: 2
     pagesize: 20
+    # Optional: keep only Taiwan-listed (TWSE / TPEx) employers; checked against the exchanges' open data.
+    # require_listed: tw
     # Optional title screen (regexes, case-insensitive). Every title_include entry must match; any title_exclude match drops.
     # After editing: node scripts/discover.mjs --rescreen drops open rows that no longer pass.
     # title_include: ['manager|lead|head|director']
