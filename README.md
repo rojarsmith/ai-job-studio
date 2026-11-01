@@ -41,6 +41,7 @@ node scripts/score-prep.mjs      # S2a fetch full text → generated/reports/NNN
 #                                  S2b in Claude Code: run modes/score.md (see "Running a mode" below)
 node scripts/score-apply.mjs     # S2c validate scores, enforce thresholds, move rows to scored / skip
 node scripts/status.mjs
+node scripts/rank.mjs [--source tsmc] [--min 3] [--write]   # scored reports, best fit first (score, skills, level); --write saves generated/data/ranking.md
 ```
 
 Tailoring (S3), per application:
@@ -189,7 +190,7 @@ adapters/     greenhouse.mjs 104.mjs      L2: search / detail / isLive now; fill
 browser/      launch.mjs session.mjs wait-human.mjs   L1: Patchright + real Chrome, per-site profile or CDP attach, ensureLoggedIn, wait_human
 lib/          state pipeline dedup blacklist report scoring tailor pdf http browser-fetch workspace profile credentials sessions answers knockout form tracker login followups retro
 modes/        score tailor followup interview debrief retro    L4: prompts run inside Claude Code / Codex
-scripts/      workspace discover score-prep score-apply tailor-prep ats-check build-pdf resume-pdf tailor-apply tabs tab-run prepare apply track followup outcome retro status daily.ps1 weekly.ps1
+scripts/      workspace discover score-prep score-apply tailor-prep ats-check build-pdf resume-pdf rank tailor-apply tabs tab-run prepare apply track followup outcome retro status daily.ps1 weekly.ps1
 templates/    resume.css cover.css        default stylesheets; <workspace>/source/templates/ overrides by file name
 examples/     workspace/                  templates copied by `workspace init`; the only config in this repo
 test/         node --test

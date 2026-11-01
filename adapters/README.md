@@ -30,3 +30,5 @@ Nothing that identifies a person goes in: no real name, email, phone, account id
 When a site changes, fix the default here if it is a general fix; put a one-person workaround in the workspace's `source/sites.yml`.
 
 Out of scope for adapters: working around bot challenges, CAPTCHA, 2FA or rate limits. On those the code stops and hands the page back to the human.
+
+Sources with an adapter today: Greenhouse, 104, LinkedIn (guest search) and TSMC Careers (`tsmc`: discovery and scoring only; it needs your own Chrome with a debugging port because the site rejects plain HTTP clients).

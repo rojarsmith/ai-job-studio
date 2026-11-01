@@ -1,6 +1,6 @@
 # TSMC Careers (careers.tsmc.com)
 
-Verified live 2026-10-31 (English UI, `en_US`). The platform looks like Avature: `SearchJobs`, `JobDetail?jobId=N`, numeric form field names.
+Verified live 2026-10-31 and 2026-11-01 (English UI, `en_US`). The platform looks like Avature: `SearchJobs`, `JobDetail?jobId=N`, numeric form field names.
 
 - **Auth**: log in by hand. When logged in the header shows the candidate name and a "My Profile" link. Nothing here stores or types credentials.
 - **URLs**: `/en_US/careers/Profile` (read-only view, file Download/Delete, "Positions Applied" with "Update Application"), `/en_US/careers/ProfileEdit` (one long form, buttons `Cancel` / `Save`), `/en_US/careers/SearchJobs`, `/en_US/careers/JobDetail?jobId=<n>`. A permanent "Register your profile on TSMC Talent Pool" posting exists as a job detail.
@@ -17,3 +17,15 @@ Verified live 2026-10-31 (English UI, `en_US`). The platform looks like Avature:
 - **Saving**: about 30 inputs are `required`; a profile that was complete before still saves. A failed save stays on `ProfileEdit` with inline errors.
 - **Recipe: refresh the profile from a resume**: update the keyword inputs and any changed title/major/date fields in `ProfileEdit`; `node scripts/resume-pdf.mjs`; delete old resume files on `/Profile` (dialog); upload the new PDF(s) in `ProfileEdit`; reload `/Profile` and compare.
 - **Dead ends**: looking for a work-description or skills field (does not exist). Deleting from `ProfileEdit` (only the "Uploaded files" dropdown is there; deletion needs `/Profile`).
+
+## Search and discovery (verified 2026-11-01)
+
+- **No login needed, but a Cloudflare check blocks plain HTTP clients**: Node's `fetch` gets 403 "Just a moment". `lib/http.mjs` falls back to a fetch inside a page of your Chrome (`attach: cdp` in `browser.yml` uses one extra tab of the Chrome you started, closed at the end). After the first block the host is remembered, so only the first request tries Node.
+- **List**: `GET /en_US/careers/SearchJobs/?<filters>&listFilterMode=true&jobRecordsPerPage=10&jobOffset=<n>`. The page size is fixed at 10 (larger values are ignored); the total is in the text "N results". The form posts, but the same parameters work as GET and the paging links keep them.
+- **Filters** (ids are in `adapters/tsmc.mjs`): `search` keyword, `1277` location, `147` job type (Technician / Associate Engineer / Engineer / **Manager / Executive**), `558` job category, `542` employment type, `4177` organization (TSMC Group, ESMC, JASM). Location is country-level only ("Taiwan"); the work site (for example Hsinchu) shows up, when at all, inside the posting text.
+- **Best filters for leadership searches**: job type "Manager / Executive" plus Location Taiwan, then category "Information Technology", then a few keywords (director, program manager, software). The unfiltered list is about eight hundred postings across all functions, most of them fab, legal, HR and finance.
+- **List item**: `article.article--result`; link `JobDetail?jobId=<n>`; subtitle spans `list-item-location`, `list-item-careerArea`, `list-item-employmentType`, `list-item-posted`. The standing "Register your profile on TSMC Talent Pool" posting leads unfiltered lists and is not a job (the adapter skips it).
+- **Detail page**: read the `.article__content__view__field` label/value pairs: Company, Location, Career Area, Job Type, Employment Type, Posted, Job Responsibilities, Job Qualifications. Dates are English month names ("Sep 11, 2026"): build the ISO date from the parts; `Date.parse` + `toISOString` is one day early in UTC+8.
+- **Cost**: about 4 s per detail page through the browser (a hundred postings take roughly eight minutes) and about 1 s per list page after the polite delay. Filter first; do not fetch everything.
+- **Duplicates with your own history**: `/Profile` lists "Positions Applied". Check it before recommending a posting; a posting you already applied to scores like any other but must be marked.
+- **Dead ends**: `jobRecordsPerPage` above 10 (ignored); Node `fetch` without the browser fallback (403); the JSON-LD `JobPosting` block (its responsibilities, qualifications, work-hours and skills fields repeat the same text shifted, and `datePosted` is null).

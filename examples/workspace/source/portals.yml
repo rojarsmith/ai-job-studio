@@ -49,3 +49,11 @@ sources:
     # extra query params, e.g. f_WT: 2 (remote), f_TPR: r604800 (past week)
     params:
       f_TPR: r604800
+  tsmc:
+    enabled: false
+    # Needs your own Chrome with a debugging port (browser.yml: attach: cdp); the site rejects plain HTTP clients.
+    # Query keys: org, location, category, job_type, employment, keyword. See adapters/tsmc.mjs for the accepted names.
+    max_pages: 15
+    queries:
+      - { location: Taiwan, job_type: "Manager / Executive" }
+      - { location: Taiwan, keyword: "program manager" }
