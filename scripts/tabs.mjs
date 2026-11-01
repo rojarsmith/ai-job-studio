@@ -6,8 +6,7 @@
 //   node scripts/tabs.mjs                 list tabs
 //   node scripts/tabs.mjs --scroll        list + human-paced scroll + content summary per tab
 //   node scripts/tabs.mjs --scroll --json
-import { chromium } from 'patchright';
-import { cdpUrl } from '../browser/launch.mjs';
+import { cdpUrl, connectCdp } from '../browser/launch.mjs';
 
 const args = process.argv.slice(2);
 const doScroll = args.includes('--scroll'), json = args.includes('--json');
@@ -23,7 +22,7 @@ const SITE_HINTS = [
 const siteOf = (url) => SITE_HINTS.find(([re]) => re.test(url))?.[1] ?? null;
 
 let browser;
-try { browser = await chromium.connectOverCDP(cdpUrl(), { timeout: 5000 }); }
+try { browser = await connectCdp({ timeout: 5000 }); }
 catch (e) {
   console.error(`[tabs] cannot reach ${cdpUrl()}: ${e.message.split('\n')[0]}`);
   console.error('[tabs] start your Chrome with --remote-debugging-port=9222 (see README "Attach mode"), then re-run.');

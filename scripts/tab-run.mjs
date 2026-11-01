@@ -8,13 +8,12 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { chromium } from 'patchright';
-import { cdpUrl } from '../browser/launch.mjs';
+import { cdpUrl, connectCdp } from '../browser/launch.mjs';
 
 const [match, file] = process.argv.slice(2);
 if (!match || !file) { console.error('usage: node scripts/tab-run.mjs <url-substring> <script.js>'); process.exit(2); }
 let browser;
-try { browser = await chromium.connectOverCDP(cdpUrl()); }
+try { browser = await connectCdp(); }
 catch { console.error(`[tab-run] no Chrome with a debugging port at ${cdpUrl()}; start it as described in README "Attach mode"`); process.exit(1); }
 const page = browser.contexts().flatMap((c) => c.pages()).find((x) => x.url().includes(match));
 if (!page) { console.error(`[tab-run] no open tab whose URL contains "${match}" (node scripts/tabs.mjs lists them)`); process.exit(1); }

@@ -28,6 +28,17 @@ export function resolveChrome() {
   for (const c of CANDIDATES) { const p = c(); if (p && fs.existsSync(p)) return p; }
   throw new Error('no Chrome found. Set JOB_CHROME_EXE or chrome_exe in <workspace>/config/browser.yml (portable Chrome: App\\Chrome-bin\\chrome.exe)');
 }
+/** The browser-level WebSocket URL of the attached Chrome. Playwright's own http discovery step can hang on a busy Chrome
+ *  (curl and a raw WebSocket answer at once), so ask /json/version ourselves with a short timeout and connect to the ws URL. */
+export async function cdpEndpoint(url = cdpUrl()) {
+  try {
+    const r = await fetch(`${String(url).replace(/\/$/, '')}/json/version`, { signal: AbortSignal.timeout(5000) });
+    const ws = (await r.json()).webSocketDebuggerUrl;
+    if (ws) return ws;
+  } catch { /* fall back to the plain url */ }
+  return url;
+}
+export async function connectCdp(opts) { return chromium.connectOverCDP(await cdpEndpoint(), opts); }
 export const cdpUrl = () => process.env.JOB_CDP_URL || loadConfig('browser').cdp_url || 'http://127.0.0.1:9222';
 
 /** Mode A: dedicated persistent profile per site under <workspace>/profiles. Never Chrome's own user-data-dir. */
@@ -45,7 +56,7 @@ export async function launchSite(site, { headless = false } = {}) {
 
 /** Mode B: attach to a running Chrome started with --remote-debugging-port=9222 (non-default user-data-dir). */
 export async function attachRunning() {
-  const browser = await chromium.connectOverCDP(cdpUrl());
+  const browser = await connectCdp();
   const ctx = browser.contexts()[0] ?? (await browser.newContext());
   return { browser, ctx, page: await ctx.newPage(), mode: 'B' };
 }
