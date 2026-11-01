@@ -2,12 +2,16 @@
 // S6 Track. Status overview of submitted applications; manual status changes; ghosting sweep.
 //   node scripts/track.mjs                              counts by status + open rows
 //   node scripts/track.mjs --set <NNN> <status> [note]  screening | interview | offer | rejected | ghosted
+//   node scripts/track.mjs --submitted <NNN> [note]     record an application you submitted yourself (outside apply.mjs)
 //   node scripts/track.mjs --mark-ghosted               submitted/screening rows untouched for thresholds.ghost_days → ghosted
 // Inbox / site-message scanning is intentionally not automated (needs login state); update by hand or via outcome.mjs.
 import { loadConfig, today } from '../lib/config.mjs';
-import { readTracker, setStatus } from '../lib/tracker.mjs';
+import { readTracker, setStatus, addApplication, logApplication } from '../lib/tracker.mjs';
+import { readReport, writeReport } from '../lib/report.mjs';
+import { setMaterials } from '../lib/tailor.mjs';
 import { readPipeline, writePipeline, transition } from '../lib/pipeline.mjs';
 import { canTransition } from '../lib/state.mjs';
+import { walkToSubmitted } from '../lib/submitted.mjs';
 
 const args = process.argv.slice(2);
 const th = loadConfig('thresholds');
@@ -26,7 +30,24 @@ export function applyStatus(id, status, note = '') {
   setStatus(id, status, { note, next: status === 'interview' ? 'prepare with modes/interview.md' : status === 'screening' ? 'await next step' : '' });
 }
 
-if (args[0] === '--set') {
+if (args[0] === '--submitted') {
+  const [, id, ...rest] = args;
+  if (!id) { console.error('usage: track.mjs --submitted <NNN> [note]'); process.exit(2); }
+  const row = rowFor(id);
+  if (!row) throw new Error(`pipeline has no report #${id}`);
+  if (tracker.rows.some((r) => r.id === id)) throw new Error(`tracker already has #${id}`);
+  const note = rest.join(' ') || 'submitted by hand outside apply.mjs';
+  walkToSubmitted(row, transition, note);
+  addApplication({ id, company: row.company, title: row.title, url: row.url, channel: row.source, next: `follow up on +${(th.followup_days ?? [7])[0]}d` });
+  logApplication(row.source, row.url);
+  const rep = readReport(row.report);
+  rep.front.submitted_at = new Date().toISOString();
+  const materials = rep.body.match(/## Materials\n\n([\s\S]*?)(?=\n## |\s*$)/)?.[1] ?? '';
+  rep.body = setMaterials(rep.body, `${materials.trim()}\n- submitted: ${rep.front.submitted_at} via ${row.source}; ${note}`);
+  writeReport(row.report, rep);
+  writePipeline(pipeline);
+  console.log(`[track] #${id} ${row.company} — ${row.title} → submitted, tracker row added`);
+} else if (args[0] === '--set') {
   const [, id, status, ...rest] = args;
   if (!id || !status) { console.error('usage: track.mjs --set <NNN> <status> [note]'); process.exit(2); }
   applyStatus(id, status, rest.join(' '));

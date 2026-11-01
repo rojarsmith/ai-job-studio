@@ -93,6 +93,7 @@ After submission (S6 to S9):
 ```bash
 node scripts/track.mjs                                  # S6  counts by status, open applications
 node scripts/track.mjs --set 008 screening "recruiter call"
+node scripts/track.mjs --submitted 008 "applied by hand"   #     record an application you submitted yourself
 node scripts/track.mjs --mark-ghosted                   #     submitted/screening untouched for thresholds.ghost_days → ghosted
 node scripts/followup.mjs                               # S7  draft stubs at followup_days; modes/followup.md writes the text; you send
 node scripts/followup.mjs --sent 008 7

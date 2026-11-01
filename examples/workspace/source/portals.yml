@@ -32,6 +32,10 @@ sources:
       - 6001002000
     max_pages: 2
     pagesize: 20
+    # Optional title screen (regexes, case-insensitive). Every title_include entry must match; any title_exclude match drops.
+    # After editing: node scripts/discover.mjs --rescreen drops open rows that no longer pass.
+    # title_include: ['manager|lead|head|director']
+    # title_exclude: ['intern|junior']
     # Passed straight into the search API. ro=1 full-time, order=15 newest first, remoteWork=1 remote only.
     params:
       ro: 1
