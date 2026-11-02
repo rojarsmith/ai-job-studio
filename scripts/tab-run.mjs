@@ -24,8 +24,12 @@ const sleep = (ms) => page.waitForTimeout(ms);
 const shot = async (name = 'a') => { const f = path.join(TMP, `${name}.png`); await page.screenshot({ path: f }); console.log(`[tab-run] screenshot ${f}`); };
 const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor;
 let code = 0;
+// Tabs that the script opens itself (b.contexts()[0].newPage()) are closed when it ends, also when it fails, so they do not pile up.
+const opened = [];
+for (const c of browser.contexts()) c.on('page', (p) => opened.push(p));
 try {
   const r = await new AsyncFunction('p', 'b', 'sleep', 'shot', 'fs', 'TMP', fs.readFileSync(file, 'utf8'))(page, browser, sleep, shot, fs, TMP);
   if (r !== undefined) console.log(typeof r === 'string' ? r : JSON.stringify(r, null, 1));
 } catch (e) { console.error(`[tab-run] ${e.message.split('\n')[0]}`); code = 1; }
+for (const p of opened) { if (p !== page) await p.close().catch(() => {}); }
 process.exit(code);

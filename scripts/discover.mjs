@@ -14,6 +14,7 @@ import { OPEN_PRE_APPLY } from '../lib/state.mjs';
 import { politeDelay } from '../lib/http.mjs';
 import { makeTitleFilter } from '../lib/titlefilter.mjs';
 import { listedCheck, makeAllowCheck } from '../lib/listed.mjs';
+import { shutdown } from '../lib/shutdown.mjs';
 
 const args = process.argv.slice(2);
 const opt = (k) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : undefined; };
@@ -96,3 +97,5 @@ if (flag('--recheck') || flag('--recheck-all')) {
 if (dry) console.log('[discover] dry-run, pipeline not written');
 else writePipeline(pipeline);
 console.log(`[discover] done ${JSON.stringify(summary)} pipeline_rows=${pipeline.rows.length}`);
+await shutdown();   // close the tab(s) this run opened in your Chrome, then end the process
+process.exit(0);

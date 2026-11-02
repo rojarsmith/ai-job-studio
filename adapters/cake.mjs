@@ -6,6 +6,7 @@
 import { attachRunning } from '../browser/launch.mjs';
 import { politeDelay } from '../lib/http.mjs';
 import { htmlToText } from '../lib/html.mjs';
+import { onShutdown } from '../lib/shutdown.mjs';
 
 export const name = 'cake';
 const ORIGIN = 'https://www.cake.me';
@@ -50,7 +51,7 @@ async function openTab() {
   const page = await ctx.newPage();
   tab = { page, auth: null };
   page.on('request', (r) => { const a = r.headers().authorization; if (a && /api\.cake\.me/.test(r.url())) tab.auth = a; });
-  process.once('beforeExit', async () => { try { await page.close(); } catch { /* ignore */ } });
+  onShutdown(async () => { await page.close(); tab = null; });
   return tab;
 }
 

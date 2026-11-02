@@ -6,6 +6,7 @@
 //   node scripts/tabs.mjs                 list tabs
 //   node scripts/tabs.mjs --scroll        list + human-paced scroll + content summary per tab
 //   node scripts/tabs.mjs --scroll --json
+//   node scripts/tabs.mjs --close-extra [--dry-run]   keep one tab per site, close the rest
 import { cdpUrl, connectCdp } from '../browser/launch.mjs';
 
 const args = process.argv.slice(2);
@@ -22,13 +23,43 @@ const SITE_HINTS = [
 const siteOf = (url) => SITE_HINTS.find(([re]) => re.test(url))?.[1] ?? null;
 
 let browser;
-try { browser = await connectCdp({ timeout: 5000 }); }
+try { browser = await connectCdp({ timeout: 30000 }); }   // many open tabs make the attach slow
 catch (e) {
   console.error(`[tabs] cannot reach ${cdpUrl()}: ${e.message.split('\n')[0]}`);
   console.error('[tabs] start your Chrome with --remote-debugging-port=9222 (see README "Attach mode"), then re-run.');
   process.exit(1);
 }
 const pages = browser.contexts().flatMap((c) => c.pages()).filter((p) => !/^(chrome|devtools|edge):\/\//.test(p.url()));
+// --close-extra: keep one tab per site (the one with the shortest path, usually the home or search page) and close the rest,
+// including blank tabs. --dry-run only lists what would be closed. Pages that are not job sites are treated the same way.
+if (args.includes('--close-extra')) {
+  const dry = args.includes('--dry-run');
+  const SECOND_LEVEL = /^(com|co|org|net|gov|edu)\.[a-z]{2}$/;
+  const siteKey = (url) => {
+    if (!/^https?:/.test(url)) return null;
+    const labels = new URL(url).hostname.split('.');
+    const tail = labels.slice(-2).join('.');
+    return SECOND_LEVEL.test(tail) ? labels.slice(-3).join('.') : tail;
+  };
+  const keep = new Map();
+  for (const p of pages) {
+    const k = siteKey(p.url());
+    if (!k) continue;
+    const len = new URL(p.url()).pathname.length;
+    if (!keep.has(k) || len < keep.get(k).len) keep.set(k, { page: p, len });
+  }
+  let closed = 0;
+  for (const p of pages) {
+    const k = siteKey(p.url());
+    if (k && keep.get(k).page === p) continue;
+    console.log(`[tabs] ${dry ? 'would close' : 'closing'}: ${p.url().slice(0, 100)}`);
+    if (!dry) { await p.close().catch(() => {}); closed++; }
+  }
+  console.log(`[tabs] ${dry ? 'would keep' : 'kept'} ${keep.size} tab(s), ${dry ? 'would close' : 'closed'} ${dry ? pages.length - keep.size : closed}`);
+  await browser.close().catch(() => {});
+  process.exit(0);
+}
+
 const out = [];
 for (const [i, page] of pages.entries()) {
   const rec = { index: i + 1, url: page.url(), title: '', site: siteOf(page.url()) };

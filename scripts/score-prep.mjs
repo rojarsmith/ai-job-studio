@@ -9,6 +9,7 @@ import { adapterForUrl } from '../adapters/index.mjs';
 import { buildReport, nextId, slug, writeReport } from '../lib/report.mjs';
 import { politeDelay } from '../lib/http.mjs';
 import { dealBreakerHit } from '../lib/scoring.mjs';
+import { shutdown } from '../lib/shutdown.mjs';
 
 const args = process.argv.slice(2);
 const limit = Number(args[args.indexOf('--limit') + 1]) || Infinity;
@@ -43,3 +44,5 @@ for (const row of targets) {
 }
 writePipeline(pipeline);
 console.log(`[score-prep] done reports=${n} closed=${closed} deal_breaker=${db} errors=${errors}`);
+await shutdown();   // close the tab(s) this run opened in your Chrome, then end the process
+process.exit(0);
