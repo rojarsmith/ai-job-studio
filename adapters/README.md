@@ -31,4 +31,4 @@ When a site changes, fix the default here if it is a general fix; put a one-pers
 
 Out of scope for adapters: working around bot challenges, CAPTCHA, 2FA or rate limits. On those the code stops and hands the page back to the human.
 
-Sources with an adapter today: Greenhouse, Ashby, Yourator (discovery and scoring only), 104, LinkedIn (guest search) and TSMC Careers (`tsmc`: discovery and scoring only; it needs your own Chrome with a debugging port because the site rejects plain HTTP clients).
+Sources with an adapter today: Greenhouse, Ashby, Yourator and Cake (both discovery and scoring only), 104, LinkedIn (guest search) and TSMC Careers (`tsmc`: discovery and scoring only; it needs your own Chrome with a debugging port because the site rejects plain HTTP clients).

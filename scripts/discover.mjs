@@ -13,13 +13,20 @@ import { adapterFor, adapterForUrl } from '../adapters/index.mjs';
 import { OPEN_PRE_APPLY } from '../lib/state.mjs';
 import { politeDelay } from '../lib/http.mjs';
 import { makeTitleFilter } from '../lib/titlefilter.mjs';
-import { listedCheck } from '../lib/listed.mjs';
+import { listedCheck, makeAllowCheck } from '../lib/listed.mjs';
 
 const args = process.argv.slice(2);
 const opt = (k) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : undefined; };
 const flag = (k) => args.includes(k);
 const dry = flag('--dry-run');
 const only = opt('--source');
+
+// require_listed: tw keeps Taiwan-listed employers; allow_companies adds named employers (foreign firms with a Taiwan branch).
+async function listedGate(cfg) {
+  if (cfg.require_listed !== 'tw') return () => true;
+  const listed = await listedCheck(), allow = makeAllowCheck(cfg.allow_companies);
+  return (company) => listed(company) || allow(company);
+}
 
 const portals = loadConfig('portals');
 const thresholds = loadConfig('thresholds');
@@ -34,7 +41,7 @@ if (flag('--rescreen')) {
   for (const [source, cfg] of Object.entries(portals.sources ?? {})) {
     if (only && only !== source) continue;
     const titleOk = makeTitleFilter(cfg);
-    const listedOk = cfg.require_listed === 'tw' ? await listedCheck() : () => true;
+    const listedOk = await listedGate(cfg);
     const before = pipeline.rows.length;
     pipeline.rows = pipeline.rows.filter((r) => !(r.source === source && r.state === 'discovered' && !r.report && !(titleOk(r.title) && listedOk(r.company))));
     dropped += before - pipeline.rows.length;
@@ -52,7 +59,7 @@ for (const [source, cfg] of Object.entries(portals.sources ?? {})) {
   catch (e) { summary.errors++; console.error(`[discover] ${source} failed: ${e.message}`); continue; }
   let added = 0, screened = 0;
   const titleOk = makeTitleFilter(cfg);
-  const listedOk = cfg.require_listed === 'tw' ? await listedCheck() : () => true;
+  const listedOk = await listedGate(cfg);
   for (const job of jobs) {
     summary.found++;
     if (!titleOk(job.title)) { screened++; summary.screened = (summary.screened ?? 0) + 1; continue; }

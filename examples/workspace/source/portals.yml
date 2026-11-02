@@ -53,6 +53,22 @@ sources:
       - 'engineer|software|軟體|研發|資訊'
     title_exclude:
       - 'sales|業務|行銷|設計'
+  cake:
+    enabled: false
+    # Cake search API through your own Chrome (attach: cdp). One search per keyword.
+    keywords:
+      - engineering manager
+    locations:
+      - Taiwan
+    max_pages: 3
+    require_listed: tw
+    # Employers that are not listed but acceptable (foreign companies with a Taiwan office), matched by contained name.
+    allow_companies:
+      - Example Global
+    title_include:
+      - 'engineer|software|軟體'
+    title_exclude:
+      - 'sales|業務|行銷'
   "104":
     enabled: true
     # One search per keyword × area.
