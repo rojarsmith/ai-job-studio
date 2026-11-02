@@ -2,7 +2,10 @@
 // S1 Discover. Login-free search across config/portals.yml, dedup, blacklist, append to data/pipeline.md.
 //   node scripts/discover.mjs [--source greenhouse|104] [--dry-run] [--recheck] [--recheck-all]
 // --employers: only the employer lists of a source that has `companies` (104: top market-cap companies), no keyword search.
+// --audit: write every row of the run with the reason it was kept or dropped (title screen, not listed, blacklist, duplicate, new)
+//   to generated/data/discover-audit.tsv, so the screens can be tuned from evidence.
 // --recheck: liveness-check open rows older than thresholds.liveness_recheck_days; closed rows → skip.
+import fs from 'node:fs';
 import { loadConfig, today } from '../lib/config.mjs';
 import { P } from '../lib/paths.mjs';
 import { readPipeline, writePipeline, transition } from '../lib/pipeline.mjs';
@@ -33,6 +36,8 @@ const portals = loadConfig('portals');
 const thresholds = loadConfig('thresholds');
 const pipeline = readPipeline();
 const date = today();
+const audit = [];
+const note = (source, job, verdict) => { if (flag('--audit')) audit.push([source, verdict, job.company, job.title, job.location ?? '', job.salary ?? '', job.url].map((v) => String(v ?? '').replace(/[\t\n\r]+/g, ' ')).join('\t')); };
 const summary = { found: 0, new: 0, dup: 0, blacklisted: 0, closed: 0, errors: 0 };
 
 // --rescreen: no search. Re-apply title_include / title_exclude and require_listed to rows that are still "discovered" without a report
@@ -63,14 +68,15 @@ for (const [source, cfg] of Object.entries(portals.sources ?? {})) {
   const listedOk = await listedGate(cfg);
   for (const job of jobs) {
     summary.found++;
-    if (!titleOk(job.title)) { screened++; summary.screened = (summary.screened ?? 0) + 1; continue; }
-    if (!listedOk(job.company)) { screened++; summary.notListed = (summary.notListed ?? 0) + 1; continue; }
+    if (!titleOk(job.title)) { note(source, job, 'title'); screened++; summary.screened = (summary.screened ?? 0) + 1; continue; }
+    if (!listedOk(job.company)) { note(source, job, 'notListed'); screened++; summary.notListed = (summary.notListed ?? 0) + 1; continue; }
     const bl = blacklistReason(job);
-    if (bl) { summary.blacklisted++; continue; }
+    if (bl) { note(source, job, 'blacklisted'); summary.blacklisted++; continue; }
     const dup = isDuplicate(job, pipeline.rows);
-    if (dup) { summary.dup++; continue; }
+    if (dup) { note(source, job, 'dup'); summary.dup++; continue; }
     pipeline.rows.push({ url: job.url, company: job.company, title: job.title, source, found: date, state: 'discovered', score: '', report: '' });
     added++;
+    note(source, job, 'new');
     console.log(`[discover] + ${source} | ${job.company} | ${job.title} | ${job.url}`);
   }
   summary.new += added;
@@ -94,6 +100,11 @@ if (flag('--recheck') || flag('--recheck-all')) {
   }
 }
 
+if (audit.length) {
+  fs.mkdirSync(P.data('.'), { recursive: true });
+  fs.writeFileSync(P.data('discover-audit.tsv'), ['source\tverdict\tcompany\ttitle\tlocation\tsalary\turl', ...audit].join('\n') + '\n');
+  console.log(`[discover] audit: ${audit.length} rows → generated/data/discover-audit.tsv`);
+}
 if (dry) console.log('[discover] dry-run, pipeline not written');
 else writePipeline(pipeline);
 console.log(`[discover] done ${JSON.stringify(summary)} pipeline_rows=${pipeline.rows.length}`);

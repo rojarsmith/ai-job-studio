@@ -6,7 +6,7 @@
 //   node scripts/tabs.mjs                 list tabs
 //   node scripts/tabs.mjs --scroll        list + human-paced scroll + content summary per tab
 //   node scripts/tabs.mjs --scroll --json
-//   node scripts/tabs.mjs --close-extra [--dry-run]   keep one tab per site, close the rest
+//   node scripts/tabs.mjs --close-extra [--keep 3] [--dry-run]   keep N tabs per site (default 1), close the rest
 import { cdpUrl, connectCdp } from '../browser/launch.mjs';
 
 const args = process.argv.slice(2);
@@ -30,10 +30,11 @@ catch (e) {
   process.exit(1);
 }
 const pages = browser.contexts().flatMap((c) => c.pages()).filter((p) => !/^(chrome|devtools|edge):\/\//.test(p.url()));
-// --close-extra: keep one tab per site (the one with the shortest path, usually the home or search page) and close the rest,
+// --close-extra: keep N tabs per site (default 1; the ones with the shortest paths, usually home or search pages) and close the rest,
 // including blank tabs. --dry-run only lists what would be closed. Pages that are not job sites are treated the same way.
 if (args.includes('--close-extra')) {
   const dry = args.includes('--dry-run');
+  const keepN = Math.max(1, Number(args[args.indexOf('--keep') + 1]) || 1);
   const SECOND_LEVEL = /^(com|co|org|net|gov|edu)\.[a-z]{2}$/;
   const siteKey = (url) => {
     if (!/^https?:/.test(url)) return null;
@@ -41,21 +42,22 @@ if (args.includes('--close-extra')) {
     const tail = labels.slice(-2).join('.');
     return SECOND_LEVEL.test(tail) ? labels.slice(-3).join('.') : tail;
   };
-  const keep = new Map();
+  const bySite = new Map();
   for (const p of pages) {
     const k = siteKey(p.url());
     if (!k) continue;
-    const len = new URL(p.url()).pathname.length;
-    if (!keep.has(k) || len < keep.get(k).len) keep.set(k, { page: p, len });
+    if (!bySite.has(k)) bySite.set(k, []);
+    bySite.get(k).push({ page: p, len: new URL(p.url()).pathname.length });
   }
+  const keepSet = new Set();
+  for (const list of bySite.values()) for (const e of list.sort((a, b) => a.len - b.len).slice(0, keepN)) keepSet.add(e.page);
   let closed = 0;
   for (const p of pages) {
-    const k = siteKey(p.url());
-    if (k && keep.get(k).page === p) continue;
+    if (keepSet.has(p)) continue;
     console.log(`[tabs] ${dry ? 'would close' : 'closing'}: ${p.url().slice(0, 100)}`);
     if (!dry) { await p.close().catch(() => {}); closed++; }
   }
-  console.log(`[tabs] ${dry ? 'would keep' : 'kept'} ${keep.size} tab(s), ${dry ? 'would close' : 'closed'} ${dry ? pages.length - keep.size : closed}`);
+  console.log(`[tabs] ${dry ? 'would keep' : 'kept'} ${keepSet.size} tab(s), ${dry ? 'would close' : 'closed'} ${dry ? pages.length - keepSet.size : closed}`);
   await browser.close().catch(() => {});
   process.exit(0);
 }
