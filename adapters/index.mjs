@@ -3,8 +3,9 @@ import * as ashby from './ashby.mjs';
 import * as s104 from './104.mjs';
 import * as linkedin from './linkedin.mjs';
 import * as tsmc from './tsmc.mjs';
+import * as yourator from './yourator.mjs';
 
-export const ADAPTERS = Object.freeze({ greenhouse, ashby, '104': s104, linkedin, tsmc });
+export const ADAPTERS = Object.freeze({ greenhouse, ashby, '104': s104, linkedin, tsmc, yourator });
 export function adapterFor(source) {
   const a = ADAPTERS[source];
   if (!a) throw new Error(`no adapter for source "${source}"`);
@@ -17,5 +18,6 @@ export function adapterForUrl(url) {
   if (/104\.com\.tw/.test(u)) return s104;
   if (/linkedin\.com/.test(u)) return linkedin;
   if (/careers\.tsmc\.com/.test(u)) return tsmc;
+  if (/yourator\.co/.test(u)) return yourator;
   return null;
 }

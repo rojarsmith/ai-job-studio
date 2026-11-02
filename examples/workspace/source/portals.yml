@@ -37,6 +37,22 @@ sources:
       - 'engineer|software|platform|infrastructure|\bAI\b|data|security|cloud'
     title_exclude:
       - 'recruit|sales|marketing|finance|legal|people|talent|account|support'
+  yourator:
+    enabled: false
+    # Taiwan start-up board. One search per keyword; the city filter compares with the list text (it spells 臺, so list both forms).
+    keywords:
+      - engineering manager
+      - 研發經理
+    locations:
+      - 臺北
+      - 台北
+      - 新北
+    max_pages: 3
+    require_listed: tw
+    title_include:
+      - 'engineer|software|軟體|研發|資訊'
+    title_exclude:
+      - 'sales|業務|行銷|設計'
   "104":
     enabled: true
     # One search per keyword × area.
