@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildListUrl, parseJobPosting, toJob, jobIdOf, search, detail } from '../adapters/yourator.mjs';
+import { buildListUrl, parseJobPosting, sectionText, toJob, jobIdOf, search, detail } from '../adapters/yourator.mjs';
 import { adapterForUrl } from '../adapters/index.mjs';
 
 const page = (ld) => `<html><head><script type="application/ld+json">${JSON.stringify(ld)}</script></head><body></body></html>`;
@@ -26,6 +26,13 @@ test('JobPosting is read from JSON-LD and other blocks are ignored', () => {
   const html = `<script type="application/ld+json">{"@type":"Organization"}</script>${page(POSTING)}`;
   assert.equal(parseJobPosting(html).title, 'Engineering Manager');
   assert.equal(parseJobPosting('<html></html>'), null);
+});
+
+test('requirements come from the 條件要求 section of the page, not from the JSON-LD', () => {
+  const html = '<h2 class="x job-heading">工作內容</h2><section class="c"><p>Do things</p></section>'
+    + '<h2 class="x job-heading">條件要求</h2><section class="c"><p>工作經歷: 5年以上 <br>其他條件: <br>1、React</p></section>';
+  assert.match(sectionText(html, '條件要求'), /5年以上\n其他條件:\n1、React/);
+  assert.equal(sectionText(html, '不存在'), '');
 });
 
 test('adapterForUrl routes yourator.co', () => {

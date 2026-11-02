@@ -58,6 +58,13 @@ export function parseJobPosting(html) {
   return null;
 }
 
+/** Text of the page section under the given heading (`h2.job-heading`), e.g. 條件要求 / Requirement, or ''. */
+export function sectionText(html, heading) {
+  const re = new RegExp(String.raw`<h2[^>]*job-heading[^>]*>\s*${heading}\s*</h2>\s*<section[^>]*>([\s\S]*?)</section>`);
+  const m = String(html).match(re);
+  return m ? htmlToText(m[1]) : '';
+}
+
 export async function detail(url) {
   let html;
   try { html = await fetchText(url); }
@@ -75,6 +82,7 @@ export async function detail(url) {
     posted: String(j.datePosted ?? '').slice(0, 10),
     external_id: jobIdOf(url) ?? String(j.identifier ?? ''),
     description: htmlToText(String(j.description ?? '')),
+    requirements: sectionText(html, '條件要求') || sectionText(html, 'Requirements?'),
     meta: { employmentType: j.employmentType ?? null, validThrough: j.validThrough ?? null },
   };
 }
