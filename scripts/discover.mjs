@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // S1 Discover. Login-free search across config/portals.yml, dedup, blacklist, append to data/pipeline.md.
 //   node scripts/discover.mjs [--source greenhouse|104] [--dry-run] [--recheck] [--recheck-all]
+// --employers: only the employer lists of a source that has `companies` (104: top market-cap companies), no keyword search.
 // --recheck: liveness-check open rows older than thresholds.liveness_recheck_days; closed rows → skip.
 import { loadConfig, today } from '../lib/config.mjs';
 import { P } from '../lib/paths.mjs';
@@ -47,7 +48,7 @@ for (const [source, cfg] of Object.entries(portals.sources ?? {})) {
   if (cfg?.enabled === false || (only && only !== source)) continue;
   const t0 = Date.now();
   let jobs = [];
-  try { jobs = await adapterFor(source).search(cfg); }
+  try { jobs = await adapterFor(source).search(flag('--employers') ? { ...cfg, keywords: [] } : cfg); }
   catch (e) { summary.errors++; console.error(`[discover] ${source} failed: ${e.message}`); continue; }
   let added = 0, screened = 0;
   const titleOk = makeTitleFilter(cfg);

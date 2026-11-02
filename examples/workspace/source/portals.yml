@@ -66,6 +66,12 @@ sources:
       - 6001002000
     max_pages: 2
     pagesize: 20
+    # Optional: also read the job lists of the largest listed employers directly (market-cap ranking from the exchange open data).
+    # companies:
+    #   top: 50
+    #   keywords: [經理, 主管, Manager, Director]
+    #   max_pages: 2
+    #   locations: [台北市, 新北市]
     # Optional: keep only Taiwan-listed (TWSE / TPEx) employers; checked against the exchanges' open data.
     # require_listed: tw
     # Optional title screen (regexes, case-insensitive). Every title_include entry must match; any title_exclude match drops.

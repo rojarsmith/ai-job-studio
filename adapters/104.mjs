@@ -13,9 +13,62 @@ export const jobIdOf = (url) => String(url).match(JOB_URL)?.[1] ?? null;
 const salaryOf = (j) => (j.salaryLow || j.salaryHigh) ? `${j.salaryLow ?? '?'}~${j.salaryHigh ?? '?'}` : (j.salaryDesc ?? '');
 const dateOf = (s) => String(s ?? '').replace(/^(\d{4})\/?(\d{2})\/?(\d{2})$/, '$1-$2-$3');
 
+// ---- search by employer ---------------------------------------------------------------------------------------
+// The keyword search cannot be limited to an employer (a company name alone returns nothing), but every employer has its own
+// job list: company search /company/ajax/list?keyword=<name> gives `encodedCustNo`, and /api/companies/<id>/jobs takes
+// page, pageSize and a keyword. `cfg.companies` = { top: 50 } (by market cap, lib/toplisted.mjs) and/or { names: [...] },
+// plus keywords (title words), max_pages and locations (substring of the job's address).
+const normalize = (s) => String(s ?? '').replace(/臺/g, '台').replace(/[（(][^）)]*[）)]/g, '').replace(/股份有限公司|有限公司|公司|[\s　]/g, '').toLowerCase();
+
+/** The company-search result for an employer: same normalised name, else a result whose name starts with it, else null. */
+export function pickCompany(results, name) {
+  const want = normalize(name);
+  const list = results ?? [];
+  return list.find((r) => normalize(r.name) === want) ?? list.find((r) => normalize(r.name).startsWith(want)) ?? null;
+}
+
+async function resolveCompany(legal) {
+  const q = new URLSearchParams({ keyword: legal, features: '1', pageSize: '18' });
+  const data = await fetchJson(`${ORIGIN}/company/ajax/list?${q}`, { headers: { Referer: `${ORIGIN}/company/search/` } });
+  return pickCompany(data.data, legal);
+}
+
+export function companyJobs(data, legal) {
+  const lists = data?.data?.list ?? {};
+  return [...(lists.topJobs ?? []), ...(lists.normalJobs ?? [])].map((j) => ({
+    url: j.jobUrl ?? `${ORIGIN}/job/${j.jobNo}`, company: legal, title: j.jobName, source: name,
+    location: j.jobAddrNoDesc ?? '', salary: j.jobSalaryDesc ?? '', posted: '', external_id: `104:${j.jobNo}`,
+  }));
+}
+
+export async function searchCompanies(cfg) {
+  const c = cfg.companies ?? {};
+  const targets = [...(c.names ?? [])];
+  if (c.top) for (const t of await (await import('../lib/toplisted.mjs')).topListed(c.top)) targets.push(t.legal);
+  const out = [];
+  const keywords = c.keywords?.length ? c.keywords : [''];
+  for (const legal of [...new Set(targets)]) {
+    const co = await resolveCompany(legal);
+    await politeDelay();
+    if (!co) { console.error(`[104] employer not found on 104: ${legal}`); continue; }
+    for (const keyword of keywords) {
+      for (let page = 1; page <= (c.max_pages ?? 2); page++) {
+        const q = new URLSearchParams({ page: String(page), pageSize: '20', ...(keyword ? { keyword } : {}) });
+        const data = await fetchJson(`${ORIGIN}/api/companies/${co.encodedCustNo}/jobs?${q}`, { headers: { Referer: `${ORIGIN}/company/${co.encodedCustNo}` } });
+        for (const j of companyJobs(data, legal)) if (!c.locations?.length || c.locations.some((l) => j.location.includes(l))) out.push(j);
+        await politeDelay();
+        if (page >= (data?.data?.totalPages ?? 1)) break;
+      }
+    }
+  }
+  return out;
+}
+
 export async function search(cfg) {
   const out = [];
   const seen = new Set();
+  if (cfg.companies) for (const j of await searchCompanies(cfg)) { const id = jobIdOf(j.url); if (!seen.has(id)) { seen.add(id); out.push(j); } }
+  if (!cfg.keywords?.length) return out;
   const pagesize = cfg.pagesize ?? 20;
   const maxPages = cfg.max_pages ?? 1;
   const extra = cfg.params ?? {};
