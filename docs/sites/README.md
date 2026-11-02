@@ -11,6 +11,7 @@ Selectors, field names, limits, quirks, working recipes and **dead ends**. Publi
 | Cake (cake.me) | [cake.md](cake.md) |
 | LinkedIn | [linkedin.md](linkedin.md) |
 | MyGreenhouse (my.greenhouse.io) | [greenhouse.md](greenhouse.md) |
+| Ashby job boards (jobs.ashbyhq.com) | [ashby.md](ashby.md) |
 
 ## Rules for whoever touches a site (human or `modes/profile-sync.md`)
 

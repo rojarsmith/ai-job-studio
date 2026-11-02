@@ -19,6 +19,24 @@ sources:
       - remote
       - apac
       - asia
+  ashby:
+    enabled: false
+    # Ashby board names (https://jobs.ashbyhq.com/<board>). Public API, no auth. The job text comes with the list.
+    boards:
+      - example-board
+    keywords:
+      - engineering manager
+      - director
+    # Match explicit words; a bare "remote" also catches hybrid roles in other countries.
+    locations:
+      - taiwan
+      - apac
+      - worldwide
+      - global
+    title_include:
+      - 'engineer|software|platform|infrastructure|\bAI\b|data|security|cloud'
+    title_exclude:
+      - 'recruit|sales|marketing|finance|legal|people|talent|account|support'
   "104":
     enabled: true
     # One search per keyword × area.
