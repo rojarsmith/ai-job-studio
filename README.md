@@ -178,7 +178,7 @@ By default every site gets its own persistent Chrome profile under `runtime/prof
 & "C:\path\to\chrome.exe" --user-data-dir="C:\path\to\profile" --remote-debugging-port=9222 --restore-last-session
 ```
 
-Patchright then attaches over CDP; nothing about the browser's fingerprint changes because it is literally your Chrome. `node scripts/tabs.mjs` lists the open tabs; `--scroll` reads each one with uneven mouse-wheel steps and pauses and reports headings, text size and whether the page looks like a job list. It never clicks, types or writes. A Chrome started without the port cannot be attached to afterwards; the scripts fail with a clear message instead of restarting it.
+Patchright then attaches over CDP; nothing about the browser's fingerprint changes because it is literally your Chrome. `node scripts/tabs.mjs` lists the open tabs; `--scroll` reads each one with uneven mouse-wheel steps and pauses and reports headings, text size and whether the page looks like a job list. It never clicks, types or writes. `--close-extra` closes the tabs a run leaves behind: it keeps the N tabs per site with the shortest paths (usually the home or search page; `--keep N`, default 1, raise it to 3 when a site needs more than one tab open) and closes the rest, including blank tabs; `--dry-run` only lists what would go. A Chrome started without the port cannot be attached to afterwards; the scripts fail with a clear message instead of restarting it.
 
 ### Keeping profiles on job sites current
 
