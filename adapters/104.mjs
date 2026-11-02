@@ -16,7 +16,7 @@ const dateOf = (s) => String(s ?? '').replace(/^(\d{4})\/?(\d{2})\/?(\d{2})$/, '
 // ---- search by employer ---------------------------------------------------------------------------------------
 // The keyword search cannot be limited to an employer (a company name alone returns nothing), but every employer has its own
 // job list: company search /company/ajax/list?keyword=<name> gives `encodedCustNo`, and /api/companies/<id>/jobs takes
-// page, pageSize and a keyword. `cfg.companies` = { top: 50 } (by market cap, lib/toplisted.mjs) and/or { names: [...] },
+// page, pageSize and a keyword. `cfg.companies` = { top: 50, from: 1 } (by market cap, lib/toplisted.mjs) and/or { names: [...] },
 // plus keywords (title words), max_pages and locations (substring of the job's address).
 const normalize = (s) => String(s ?? '').replace(/臺/g, '台').replace(/[（(][^）)]*[）)]/g, '').replace(/股份有限公司|有限公司|公司|[\s　]/g, '').toLowerCase();
 
@@ -44,7 +44,7 @@ export function companyJobs(data, legal) {
 export async function searchCompanies(cfg) {
   const c = cfg.companies ?? {};
   const targets = [...(c.names ?? [])];
-  if (c.top) for (const t of await (await import('../lib/toplisted.mjs')).topListed(c.top)) targets.push(t.legal);
+  if (c.top) for (const t of (await (await import('../lib/toplisted.mjs')).topListed(c.top)).slice((c.from ?? 1) - 1)) targets.push(t.legal);
   const out = [];
   const keywords = c.keywords?.length ? c.keywords : [''];
   for (const legal of [...new Set(targets)]) {
