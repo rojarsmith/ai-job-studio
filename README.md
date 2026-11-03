@@ -214,6 +214,7 @@ test/         node --test
 | Greenhouse | `boards-api.greenhouse.io/v1/boards/<board>/jobs` | `/jobs/<id>` (404 = closed) | plain fetch |
 | 104 | `/jobs/search/api/jobs` | `/job/ajax/content/<id>` (`switch != on` = closed) | plain fetch; falls back to your Chrome when Cloudflare challenges Node's TLS |
 | LinkedIn | guest `jobs-guest/jobs/api/seeMoreJobPostings/search` (HTML cards) | guest `jobs/api/jobPosting/<id>` (404 = closed) | plain fetch; HTTP 429 = rate-limited, source stops for the run; JS wall → your Chrome |
+| Microsoft | `apply.careers.microsoft.com/api/pcsx/search` (10 per page) | `/api/pcsx/position_details?position_id=<id>` (role type, work site, profession) | the site's own API called inside a tab of your attached Chrome (`lib/cdp.mjs`, raw CDP, no Patchright); needs a logged-in account with a profile |
 
 Login-state detection, login-form selectors and apply URLs per site are adapter defaults that `<workspace>/source/sites.yml` can override without code changes. The 104 login and apply selectors are **unverified** against the live site; run `prepare.mjs 104 --check` and `apply.mjs NNN --dry-run` first and adjust `sites.yml` if the scan finds nothing.
 

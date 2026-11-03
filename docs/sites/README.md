@@ -13,6 +13,7 @@ Selectors, field names, limits, quirks, working recipes and **dead ends**. Publi
 | MyGreenhouse (my.greenhouse.io) | [greenhouse.md](greenhouse.md) |
 | Ashby job boards (jobs.ashbyhq.com) | [ashby.md](ashby.md) |
 | Yourator (yourator.co) | [yourator.md](yourator.md) |
+| Microsoft Careers (apply.careers.microsoft.com) | [microsoft.md](microsoft.md) |
 
 ## Rules for whoever touches a site (human or `modes/profile-sync.md`)
 
