@@ -3,7 +3,7 @@
 //   search: POST https://api.cake.me/api/client/v2/jobs/search  { query, filters:{ job_source, locations, ... }, sort_by, page, per_page }
 //           the page's own scripts attach a bearer token to every api.cake.me call; this adapter reuses that header from the tab
 //   detail: the job page https://www.cake.me/companies/<company>/jobs/<job> carries a JSON-LD JobPosting
-import { attachRunning } from '../browser/launch.mjs';
+import { openTab as openCdpTab } from '../lib/cdp.mjs';
 import { politeDelay } from '../lib/http.mjs';
 import { htmlToText } from '../lib/html.mjs';
 import { onShutdown } from '../lib/shutdown.mjs';
@@ -45,31 +45,30 @@ export function parseJobPosting(blocks) {
 }
 
 let tab = null;
+// Raw CDP tab in your attached Chrome (lib/cdp.mjs); the search API wants the Authorization header the page itself sends.
 async function openTab() {
   if (tab) return tab;
-  const { ctx } = await attachRunning();
-  const page = await ctx.newPage();
-  tab = { page, auth: null };
-  page.on('request', (r) => { const a = r.headers().authorization; if (a && /api\.cake\.me/.test(r.url())) tab.auth = a; });
-  onShutdown(async () => { await page.close(); tab = null; });
+  const t = await openCdpTab();
+  tab = { cdp: t, auth: null };
+  onShutdown(async () => { await t.close(); tab = null; });
   return tab;
 }
 
 async function authorised() {
   const t = await openTab();
   if (!t.auth) {
-    await t.page.goto(`${ORIGIN}/jobs`, { waitUntil: 'domcontentloaded' });
-    for (let i = 0; i < 30 && !t.auth; i++) await t.page.waitForTimeout(500);
+    await t.cdp.navigate(`${ORIGIN}/jobs`, { waitMs: 3000 });
+    for (let i = 0; i < 30 && !t.auth; i++) {
+      const r = t.cdp.requests().find((x) => /api.cake.me/.test(x.url) && (x.headers.authorization || x.headers.Authorization));
+      if (r) t.auth = r.headers.authorization || r.headers.Authorization; else await t.cdp.sleep(500);
+    }
   }
   if (!t.auth) throw new Error('cake: no api.cake.me request seen in the tab; open https://www.cake.me/jobs in your Chrome and retry');
   return t;
 }
 
 async function query(t, body) {
-  return t.page.evaluate(async ({ url, auth, body }) => {
-    const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json', authorization: auth }, body: JSON.stringify(body) });
-    return { status: r.status, json: await r.json().catch(() => null) };
-  }, { url: API, auth: t.auth, body });
+  return t.cdp.evaluate(`(async () => { const r = await fetch(${JSON.stringify(API)}, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json', authorization: ${JSON.stringify(t.auth)} }, body: ${JSON.stringify(JSON.stringify(body))} }); return { status: r.status, json: await r.json().catch(() => null) }; })()`);
 }
 
 export async function search(cfg = {}) {
@@ -92,10 +91,9 @@ export async function search(cfg = {}) {
 export async function detail(url) {
   if (!pathOf(url)) throw new Error(`cake: cannot parse company and job from ${url}`);
   const t = await openTab();
-  const resp = await t.page.goto(url, { waitUntil: 'domcontentloaded' });
-  await t.page.waitForTimeout(2500);
-  if (resp && resp.status() === 404 && !(await t.page.locator('script[type="application/ld+json"]').count())) return null;
-  const blocks = await t.page.evaluate(() => [...document.querySelectorAll('script[type="application/ld+json"]')].map((s) => s.textContent));
+  await t.cdp.navigate(url, { waitMs: 3500 });
+  const blocks = await t.cdp.evaluate(`[...document.querySelectorAll('script[type="application/ld+json"]')].map((s) => s.textContent)`);
+  if (!blocks.length) return null;   // a removed posting has no JobPosting JSON-LD
   const j = parseJobPosting(blocks);
   if (!j) return null;
   const loc = [].concat(j.jobLocation ?? []).map((l) => [l.address?.addressRegion, l.address?.addressLocality].filter(Boolean).join(' ')).filter(Boolean).join('; ');
