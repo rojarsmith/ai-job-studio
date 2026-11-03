@@ -23,11 +23,10 @@ form lives under `apply.careers.microsoft.com`. The old `jobs.careers.microsoft.
 - **Location strings** that work in `location=`: `Taiwan`, `Tokyo, Japan`, `Mountain View, California, United States`,
   `Sunnyvale, California, United States`, `San Francisco, California, United States`. With `filter_include_remote=1` the US
   searches also return remote-eligible postings; a posting lists every site it can be worked from (`locations`).
-- **Scale (2026-11-03)**: Taiwan has about 35 postings in total (query `""` lists them all); "engineering manager" alone gives 31 in
-  Tokyo and 99 in Mountain View. Seven keywords × five locations × three pages took about six minutes and 234 rows.
+- **Scale**: Taiwan has a few dozen postings in total (query `""` lists them all); a single title keyword returns tens of postings in a US hub. Several keywords × several locations × three pages take a few minutes.
 - **Patchright**: `connectOverCDP` hung on this Chrome (see 104.md); `lib/cdp.mjs` is the raw-CDP path the adapter uses. It opens
   its own tab and closes it at `shutdown()`.
-- **Apply flow** (verified 2026-11-03, four applications): `Apply now` is a plain link to `/careers/apply?pid=<position id>`; the
+- **Apply flow** (verified 2026-11-03): `Apply now` is a plain link to `/careers/apply?pid=<position id>`; the
   form is one long page with a side nav: Application location(s), Resume, Contact Information, (Work Authorization - <country>
   and Self-identification appear only after a location is chosen), Candidate questions, Job specific questions, Acknowledgment,
   then `Submit application`. Success lands on `/careers/apply/success?…&pid=<id>` with "Your application has been submitted".

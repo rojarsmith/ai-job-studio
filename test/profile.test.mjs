@@ -10,14 +10,14 @@ test('native profile passes through with defaults', () => {
 });
 test('career-ops profile is mapped to canonical keys', () => {
   const p = normalizeProfile({
-    candidate: { full_name: 'W B', email: 'w@b.c', phone: '+886 9', location: 'Kaohsiung, Taiwan', github: 'github.com/w' },
+    candidate: { full_name: 'Test User', email: 'test@example.com', phone: '+886 2', location: 'Taichung, Taiwan', github: 'github.com/example' },
     target_roles: { primary: ['Engineering Director', 'Software Manager'], archetypes: [{ name: 'PM', level: 'Manager and above' }] },
     compensation: { currency: 'TWD', minimum: 'TWD 100,000 monthly base', target_range: 'TWD 2.5M', location_flexibility: 'open to remote' },
     location: { authorized_in: ['Taiwan'], needs_sponsorship: true, visa_status: 'no US auth' },
-    language: { output: 'en' }, cover_letter: { notice_period_days: 30 }, deal_breakers: ['leetcode'],
+    language: { output: 'en' }, cover_letter: { notice_period_days: 30 }, deal_breakers: ['unpaid'],
   });
-  assert.equal(p.name, 'W B');
-  assert.equal(p.website, 'github.com/w');
+  assert.equal(p.name, 'Test User');
+  assert.equal(p.website, 'github.com/example');
   assert.deepEqual(p.target_titles, ['Engineering Director', 'Software Manager']);
   assert.equal(p.seniority, 'director');
   assert.equal(p.remote_preference, 'any');
@@ -25,7 +25,7 @@ test('career-ops profile is mapped to canonical keys', () => {
   assert.equal(p.work_authorization.taiwan, 'citizen');
   assert.equal(p.work_authorization.other, 'needs_sponsorship');
   assert.deepEqual(p.languages, ['en', 'zh-TW']);
-  assert.deepEqual(p.deal_breakers, ['leetcode']);
+  assert.deepEqual(p.deal_breakers, ['unpaid']);
   assert.equal(p.notice_period_days, 30);
   assert.equal(p._format, 'career-ops');
 });

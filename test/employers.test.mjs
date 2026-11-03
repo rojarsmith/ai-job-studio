@@ -27,7 +27,7 @@ test('pickCompany prefers the exact normalised name and ignores bracketed aliase
 });
 
 test('company job lists merge top and normal jobs into discovery rows', () => {
-  const data = { data: { list: { topJobs: [{ jobNo: 'a1', jobName: '軟體經理', jobUrl: 'https://www.104.com.tw/job/a1', jobAddrNoDesc: '台北市內湖區', jobSalaryDesc: '待遇面議' }], normalJobs: [{ jobNo: 'b2', jobName: '研發主管', jobAddrNoDesc: '高雄市前鎮區' }] } } };
+  const data = { data: { list: { topJobs: [{ jobNo: 'a1', jobName: '軟體經理', jobUrl: 'https://www.104.com.tw/job/a1', jobAddrNoDesc: '台北市內湖區', jobSalaryDesc: '待遇面議' }], normalJobs: [{ jobNo: 'b2', jobName: '研發主管', jobAddrNoDesc: '台中市西屯區' }] } } };
   const jobs = companyJobs(data, '例子股份有限公司');
   assert.equal(jobs.length, 2);
   assert.equal(jobs[0].company, '例子股份有限公司');

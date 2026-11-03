@@ -95,7 +95,7 @@ test('checkRoles: heading shape, date range, one format, reverse order, end >= s
   assert.ok(p.some((x) => /no date line/.test(x)));
   const backwards = parseCv('# A\na@b.c\n## Experience\n### Acme — Dev\n2022-03 to 2021-01\n- a\n');
   assert.ok(checkRoles(backwards).problems.some((x) => /end date before start/.test(x)));
-  const zhNow = parseCv('# 林美\na@b.c\n## 工作經歷\n### 甲公司 — 工程師\n2017-01 至今 · 高雄\n- a\n### 乙公司 — 工程師\n2015-01 至 2016-10 · 台南\n- b\n');
+  const zhNow = parseCv('# 林美\na@b.c\n## 工作經歷\n### 甲公司 — 工程師\n2019-04 至今 · 台中\n- a\n### 乙公司 — 工程師\n2016-02 至 2019-03 · 新竹\n- b\n');
   assert.deepEqual(checkRoles(zhNow).problems, []);
   const hyphen = parseCv('# A\na@b.c\n## Experience\n### Acme — Dev\n2021-03 - 2022-01\n- a\n### Beta — Dev\n2021-01 - 2021-02\n- b\n');
   assert.deepEqual(checkRoles(hyphen).problems, []);   // month precision: 2021-03 is after 2021-01

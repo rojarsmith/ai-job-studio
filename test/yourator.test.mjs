@@ -45,11 +45,11 @@ test('search pages through hasMore, filters by location and de-duplicates across
   globalThis.fetch = async (u) => {
     const q = new URL(u).searchParams;
     const p = Number(q.get('page'));
-    const body = p === 1 ? { payload: { hasMore: true, jobs: [...rows([1, 2], '臺北市'), ...rows([3], '台中市')] } } : { payload: { hasMore: false, jobs: rows([1, 4], '高雄市') } };
+    const body = p === 1 ? { payload: { hasMore: true, jobs: [...rows([1, 2], '臺北市'), ...rows([3], '台中市')] } } : { payload: { hasMore: false, jobs: rows([1, 4], '新北市') } };
     return new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
   };
   try {
-    const out = await search({ keywords: ['a', 'b'], locations: ['臺北', '高雄'], max_pages: 3 });
+    const out = await search({ keywords: ['a', 'b'], locations: ['臺北', '新北'], max_pages: 3 });
     assert.deepEqual(out.map((j) => j.external_id).sort(), ['1', '2', '4']);
   } finally { globalThis.fetch = realFetch; }
 });
