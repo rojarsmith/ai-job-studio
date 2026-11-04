@@ -43,6 +43,7 @@ node scripts/score-apply.mjs     # S2c validate scores, enforce thresholds, move
 node scripts/status.mjs
 node scripts/rank.mjs [--source tsmc] [--min 3] [--min-pay 1500000] [--write]   # scored reports, best fit first (score, skills, level) with a yearly pay column (▼ = below your floor); --write saves generated/data/ranking.md
 node scripts/pay.mjs [--open] [--title "product|產品"] [--write]   # pay intelligence: disclosure per source, market quartiles per currency and target title, your floor's position, best-paying postings
+node scripts/pay.mjs --annotate   # a "## Pay" section in every report: stated pay, yearly figure, floor, market position, same-employer pay, score check; run after score-prep
 ```
 
 Tailoring (S3), per application:

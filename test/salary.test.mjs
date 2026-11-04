@@ -140,3 +140,13 @@ test('reportPay: uses frontmatter pay, else reads the salary field and the job d
   rep.front.pay = { basis: 'stated', period: 'month', currency: 'TWD', min: 100000, max: null, annual_currency: 'TWD', annual_min: 1 };
   assert.equal(reportPay(rep, { currency: 'TWD', months_per_year: 13 }).annual_min, 1300000);
 });
+
+test('setSection inserts before Score once, then replaces in place', async () => {
+  const { setSection } = await import('../lib/report.mjs');
+  let body = '# T\n\nurl\n\n## Score\n\nx\n\n## Gaps\n\ny\n';
+  body = setSection(body, 'Pay', '- first');
+  body = setSection(body, 'Pay', '- second\n- third');
+  assert.equal(body, '# T\n\nurl\n\n## Pay\n\n- second\n- third\n\n## Score\n\nx\n\n## Gaps\n\ny\n');
+  assert.equal(setSection('# T\n\n## Pay\n\nold\n', 'Pay', 'new'), '# T\n\n## Pay\n\nnew\n');
+  assert.equal(setSection('# T\n', 'Pay', 'a'), '# T\n\n\n## Pay\n\na\n');
+});
