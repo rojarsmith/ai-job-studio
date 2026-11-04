@@ -41,7 +41,8 @@ node scripts/score-prep.mjs      # S2a fetch full text → generated/reports/NNN
 #                                  S2b in Claude Code: run modes/score.md (see "Running a mode" below)
 node scripts/score-apply.mjs     # S2c validate scores, enforce thresholds, move rows to scored / skip
 node scripts/status.mjs
-node scripts/rank.mjs [--source tsmc] [--min 3] [--write]   # scored reports, best fit first (score, skills, level); --write saves generated/data/ranking.md
+node scripts/rank.mjs [--source tsmc] [--min 3] [--min-pay 1500000] [--write]   # scored reports, best fit first (score, skills, level) with a yearly pay column (▼ = below your floor); --write saves generated/data/ranking.md
+node scripts/pay.mjs [--open] [--title "product|產品"] [--write]   # pay intelligence: disclosure per source, market quartiles per currency and target title, your floor's position, best-paying postings
 ```
 
 Tailoring (S3), per application:
@@ -184,14 +185,22 @@ Patchright then attaches over CDP; nothing about the browser's fingerprint chang
 
 `node scripts/resume-pdf.mjs` renders `source/cv*.md` to ATS-named PDFs (`<Name>-<Title>-CV.pdf`, one per language) after applying `source/redact.yml`, the list of things you never want published (lines to drop, clauses to cut, patterns that must not survive). `modes/profile-sync.md` walks a site's profile page in your attached Chrome through `node scripts/tab-run.mjs` and tells you which documents it wanted that `original/` does not have. What is known about each site (selectors, limits, dead ends) lives in [docs/sites/](docs/sites/README.md); every run reads the note first and writes back what it learned, so the next run does not pay for the same exploration.
 
+### Pay intelligence
+
+`lib/salary.mjs` reads the many ways postings state pay (`月薪40,000~60,000元`, `年薪 120-180萬`, `待遇面議`, Cake's `baseSalary`, "The base pay range for this role across the U.S. is USD $119,800 - $234,700 per year") and turns each into a yearly amount in `profile.yml` `salary.currency`. When the salary field is empty it looks for a pay sentence in the job text, skipping percentages and revenue figures; a currency that is not written is taken from the board or location. `score-prep` writes the result to the report's `pay:` block, which the scorer uses for the `compensation` dimension; `node scripts/pay.mjs --backfill` adds it to older reports.
+
+Every currency assumption is a setting, and `pay.mjs` / `rank.mjs` print the ones in use at the top of their output. `profile.yml` `salary.currency` is the currency everything is converted to, and the floor (`salary.annual_min`, or `monthly_min` × `months_per_year`) is in it. `thresholds.yml` `pay:` holds the rest: `months_per_year` / `hours_per_year` / `days_per_year`; `board_currency` (which currency a job board pays in when the posting does not say) and `default_currency`; `symbols` (what a bare `$`, `元` or `¥` means); `negotiable_floor` (the Taiwan 面議 rule, with its currency); and `fx` with `fx_base` and `fx_date`. Fx rates are units of `fx_base` per unit and any pair in the table converts, so a profile in USD can keep a TWD-based table. The defaults are approximate: update them and `fx_date`. A currency without a rate stays unconverted and is listed separately. Reports store pay as stated; the yearly figures are recomputed from the current settings every time, so a new rate or `months_per_year` shows at once.
+
+`node scripts/pay.mjs` reports how often each source discloses pay, market quartiles split by the currency a posting pays in (Taiwan pay and US pay are different markets even after conversion) and by the profile's target titles, where your floor sits, the best-paying postings per market, and open candidates that pay below your floor. `--open` limits it to unscored and apply / maybe rows, `--title <regex>` to similar roles, `--write` saves `generated/data/pay.md`. In Taiwan, 面議 means regular monthly pay is at least NT$40,000 (Employment Service Act art. 5); that floor is shown as `(面議)` and kept out of the market figures.
+
 ## Layout
 
 ```
 adapters/     greenhouse.mjs 104.mjs      L2: search / detail / isLive now; fill / login_state / submit_gate in P3
 browser/      launch.mjs session.mjs wait-human.mjs   L1: Patchright + real Chrome, per-site profile or CDP attach, ensureLoggedIn, wait_human
-lib/          state pipeline dedup blacklist report scoring tailor pdf http browser-fetch workspace profile credentials sessions answers knockout form tracker login followups retro
+lib/          state pipeline dedup blacklist report scoring tailor pdf http browser-fetch workspace profile credentials sessions answers knockout form tracker salary login followups retro
 modes/        score tailor followup interview debrief retro    L4: prompts run inside Claude Code / Codex
-scripts/      workspace discover score-prep score-apply tailor-prep ats-check build-pdf resume-pdf rank tailor-apply tabs tab-run prepare apply track followup outcome retro status daily.ps1 weekly.ps1
+scripts/      workspace discover score-prep score-apply tailor-prep ats-check build-pdf resume-pdf rank pay tailor-apply tabs tab-run prepare apply track followup outcome retro status daily.ps1 weekly.ps1
 templates/    resume.css cover.css        default stylesheets; <workspace>/source/templates/ overrides by file name
 examples/     workspace/                  templates copied by `workspace init`; the only config in this repo
 test/         node --test
@@ -202,6 +211,7 @@ test/         node --test
 - `data/pipeline.md` row: `- [ ] url | company | title | source | found | state | score | report`. Checked box = terminal state.
 - States: `discovered → scored → (skip | tailored) → prepared → filled → submitted → screening → interview → (offer | rejected | ghosted)`, plus `needs_human` from any pre-submit state. `lib/state.mjs` rejects everything else; `prepared → submitted` without a human does not exist.
 - Every state change appends to `data/status-log.tsv`, every scan to `data/scan-history.tsv`.
+- Report frontmatter written by score-prep: `pay.{basis,period,currency,min,max,annual_currency,annual_min,annual_max,annual_fx}` (`annual_fx`: the rate used, null when none) (`basis`: stated | description | implied | negotiable | none).
 - Report frontmatter written by the scorer: `score`, `action`, `scores.{skills,seniority,location,compensation,red_flags}`, `deal_breaker`, `scored_by`, `scored_at`.
 - `source/answers.md`: facts shared by every form (from profile; legal / salary / visa lines are `needs_confirmation` and never auto-filled). `generated/applications/NNN/` (NNN = report id): `brief.md`, `answers.md` (per-job overrides and free text; wins key by key), `cv.md`, `cover.md`, `review.md` (keyword → evidence → `supported | removed | gap`, ending in `verdict: pass|fail`), `cv.pdf`, `cover.pdf`, `cv.docx`, `cover.docx`, ATS-named copies listed in `files.json` (what `apply` uploads; `thresholds.tailor.upload: pdf|docx`).
 - ATS checks (`lib/ats.mjs`, run by `ats-check`, `build-pdf`, `tailor-apply`): H2 headings from the standard set (Summary, Skills, Experience, Education, …; zh-TW equivalents accepted), Skills + Experience present, every role `### Company — Title` with a date range in one format, newest first; no tables, images, HTML, emoji or multi-column text; keyword coverage = review.md keywords the draft mentions, must reach `thresholds.tailor.keyword_coverage_min` (default 0.5), and every `supported` keyword must appear in the draft. Words the posting uses that neither the reviewer nor the draft has are listed as notes only.

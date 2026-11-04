@@ -26,3 +26,38 @@ tailor:
   keyword_coverage_min: 0.5
   docx: true            # also write cv.docx / cover.docx (no Chrome needed)
   upload: pdf           # which named copy apply.mjs attaches: pdf | docx
+
+# Pay intelligence (score-prep writes report `pay:`, scripts/pay.mjs summarises, rank.mjs shows a pay column).
+# Every figure becomes a yearly amount in profile.yml salary.currency, so postings compare like for like.
+# pay.mjs and rank.mjs print the settings below at the top of their output; changes apply at once, no backfill needed.
+pay:
+  months_per_year: 12     # monthly pay × this. Taiwan postings state regular monthly pay; 13-14 counts a typical year-end bonus
+  hours_per_year: 2080
+  days_per_year: 250
+  # Currency of a posting that names none: the board's (board_currency), else the location's, else default_currency,
+  # else profile.yml salary.currency.
+  # default_currency: TWD
+  board_currency:         # adds to or overrides the built-in list (104, 1111, yes123, 518, cake, yourator, tsmc = TWD)
+    # jobsdb: HKD
+  symbols:                # symbols several currencies share
+    "$": USD
+    "元": TWD
+    "¥": JPY
+  # "面議" (negotiable) on a posting paid in this currency means at least this much. Taiwan: regular monthly pay
+  # ≥ NT$40,000 (Employment Service Act art. 5). Set to 0 to turn it off.
+  negotiable_floor: { amount: 40000, currency: TWD, period: month }
+  # Units of fx_base per 1 unit of each currency. Any pair in the table converts (cross rates), so a profile in USD can
+  # keep a TWD-based table. Approximate defaults: update them and fx_date. A currency missing here stays unconverted
+  # and is listed separately.
+  fx_base: TWD
+  fx_date: ""             # e.g. 2026-11-04, shown next to the rates
+  fx:
+    USD: 30.5
+    CAD: 22
+    EUR: 35
+    GBP: 40.5
+    SGD: 23.5
+    JPY: 0.2
+    AUD: 20
+    HKD: 3.9
+    CNY: 4.25

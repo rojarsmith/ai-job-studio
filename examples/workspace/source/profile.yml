@@ -15,9 +15,10 @@ target_titles:
   - Platform Engineer
 seniority: senior          # junior | mid | senior | staff
 salary:
-  currency: TWD
-  monthly_min: 100000
-  note: "annual >= 1.5M TWD or equivalent"
+  currency: TWD            # every pay figure is converted to this (thresholds.yml pay.fx); floors below are in it
+  monthly_min: 100000      # floor per month; or set annual_min (wins when both are set)
+  # annual_min: 1500000
+  note: ""
 languages:
   - zh-TW
   - en

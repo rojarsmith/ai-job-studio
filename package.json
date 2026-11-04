@@ -14,6 +14,7 @@
     "score:prep": "node scripts/score-prep.mjs",
     "score:apply": "node scripts/score-apply.mjs",
     "status": "node scripts/status.mjs",
+    "pay": "node scripts/pay.mjs",
     "tailor:prep": "node scripts/tailor-prep.mjs",
     "ats:check": "node scripts/ats-check.mjs",
     "build:pdf": "node scripts/build-pdf.mjs",

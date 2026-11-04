@@ -16,6 +16,13 @@ test('search rows become discovery rows with the company page URL', () => {
   assert.deepEqual(pathOf(j.url), ['acme', 'ai-lead-ab12']);
 });
 
+test('JSON-LD baseSalary becomes the same salary text', async () => {
+  const { salaryFromLd } = await import('../adapters/cake.mjs');
+  assert.equal(salaryFromLd({ currency: 'TWD', value: { minValue: 900000, maxValue: 1300000, unitText: 'YEAR' } }), '年薪 900000~1300000 TWD');
+  assert.equal(salaryFromLd({ currency: 'TWD', value: { minValue: 40000, maxValue: 40000, unitText: 'MONTH' } }), '月薪 40000以上 TWD');
+  assert.equal(salaryFromLd(undefined), '');
+});
+
 test('salary text names the unit and handles missing figures', () => {
   assert.equal(salaryText(ROW.salary), '年薪 2000000~2600000 TWD');
   assert.equal(salaryText({ min: null, max: null, currency: 'TWD', type: 'per_month' }), '');

@@ -21,6 +21,16 @@ export function salaryText(s) {
   return `${unit} ${s.min ?? '?'}~${s.max ?? '?'} ${s.currency ?? ''}`.trim();
 }
 
+/** JSON-LD baseSalary ({ currency, value: { minValue, maxValue, unitText: MONTH|YEAR|HOUR } }) as the same text salaryText gives. */
+export function salaryFromLd(b) {
+  const v = b?.value ?? {};
+  const type = { MONTH: 'per_month', YEAR: 'per_year', HOUR: 'per_hour' }[String(v.unitText ?? '').toUpperCase()] ?? String(v.unitText ?? '').toLowerCase();
+  const min = v.minValue ?? v.value ?? null, max = v.maxValue ?? null;
+  // A single figure (min = max, often exactly the NT$40,000 legal floor) is read as a floor.
+  if (max == null || max === min) return min == null ? '' : salaryText({ min, max: min, currency: b?.currency, type }).replace(/~\S+/, '以上');
+  return salaryText({ min, max, currency: b?.currency, type });
+}
+
 export const toJob = (r) => ({
   url: jobUrl(r),
   company: r.page?.name ?? '',
@@ -98,7 +108,7 @@ export async function detail(url) {
   if (!j) return null;
   const loc = [].concat(j.jobLocation ?? []).map((l) => [l.address?.addressRegion, l.address?.addressLocality].filter(Boolean).join(' ')).filter(Boolean).join('; ');
   return {
-    url, company: j.hiringOrganization?.name ?? '', title: j.title, source: name, location: loc, salary: '',
+    url, company: j.hiringOrganization?.name ?? '', title: j.title, source: name, location: loc, salary: salaryFromLd(j.baseSalary),
     posted: String(j.datePosted ?? '').slice(0, 10), external_id: `cake:${pathOf(url)[1]}`,
     description: htmlToText(String(j.description ?? '')),
     meta: { employmentType: j.employmentType ?? null, validThrough: j.validThrough ?? null },

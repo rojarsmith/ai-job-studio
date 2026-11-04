@@ -60,3 +60,10 @@ test('pageCount from text layer and from PDF bytes', () => {
   fs.writeFileSync(f, '%PDF-1.4\n1 0 obj << /Type /Pages /Kids [2 0 R 3 0 R] /Count 2 >> endobj\n');
   assert.equal(pageCount(f), 2);
 });
+
+test('salary expectation always names the currency and the period', async () => {
+  const { salaryExpectation } = await import('../lib/tailor.mjs');
+  assert.equal(salaryExpectation({ currency: 'USD', annual_min: 150000 }), 'USD 150000/year minimum');
+  assert.equal(salaryExpectation({ currency: 'TWD', annual_min: 1500000, monthly_min: 100000 }), 'TWD 1500000/year minimum or TWD 100000/month minimum');
+  assert.equal(salaryExpectation(undefined), '');
+});
