@@ -26,7 +26,8 @@
     "outcome": "node scripts/outcome.mjs",
     "retro": "node scripts/retro.mjs",
     "workspace": "node scripts/workspace.mjs",
-    "test": "node --test \"test/**/*.test.mjs\""
+    "test": "node --test \"test/**/*.test.mjs\"",
+    "blacklist": "node scripts/blacklist.mjs"
   },
   "dependencies": {
     "js-yaml": "^4.1.0",

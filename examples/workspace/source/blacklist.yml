@@ -1,6 +1,20 @@
 # Companies, title patterns and URL fragments that never enter the pipeline.
+# Preview what the company rules would ban: node scripts/blacklist.mjs   (--apply also moves open rows to skip)
+
+# Exact employer names. Case, punctuation and legal suffixes are ignored:
+# "Example Staffing Co., Ltd." and "範例網路股份有限公司" / "範例網路(股)公司" each match their own variants only.
 companies:
   - "Example Staffing Co"
+
+# Keywords for employers that post under several names (group prefixes, subsidiaries, English names).
+# Han keywords match anywhere in the name (2+ characters); Latin keywords match whole words (3+ letters),
+# so "Acme" does not hit "Acmetech". Use `except:` for a different employer whose name contains the keyword.
+# Prefer the most specific keyword that still covers every spelling, and check the preview before relying on it.
+company_keywords:
+  - keyword: "範例人力"
+    except: ["範例人力銀行"]
+  - "Example Staffing"
+
 # Regular expressions (case-insensitive) tested against the title.
 title_patterns:
   - "intern(ship)?\b"

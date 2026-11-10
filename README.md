@@ -44,6 +44,7 @@ node scripts/status.mjs
 node scripts/rank.mjs [--source tsmc] [--min 3] [--min-pay 1500000] [--write]   # scored reports, best fit first (score, skills, level) with a yearly pay column (▼ = below your floor); --write saves generated/data/ranking.md
 node scripts/pay.mjs [--open] [--title "product|產品"] [--write]   # pay intelligence: disclosure per source, market quartiles per currency and target title, your floor's position, best-paying postings
 node scripts/pay.mjs --annotate   # a "## Pay" section in every report: stated pay, yearly figure, floor, market position, same-employer pay, score check; run after score-prep
+node scripts/blacklist.mjs [--apply]   # which company names each blacklist.yml company rule bans (pipeline + last discover audit); --apply moves open pre-submit matches to skip
 ```
 
 Tailoring (S3), per application:
@@ -194,6 +195,8 @@ Every currency assumption is a setting, and `pay.mjs` / `rank.mjs` print the one
 
 `node scripts/pay.mjs` reports how often each source discloses pay, market quartiles split by the currency a posting pays in (Taiwan pay and US pay are different markets even after conversion) and by the profile's target titles, where your floor sits, the best-paying postings per market, and open candidates that pay below your floor. `--open` limits it to unscored and apply / maybe rows, `--title <regex>` to similar roles, `--write` saves `generated/data/pay.md`. In Taiwan, 面議 means regular monthly pay is at least NT$40,000 (Employment Service Act art. 5); that floor is shown as `(面議)` and kept out of the market figures.
 
+`source/blacklist.yml` keeps employers, titles and URLs out of the pipeline at discover time. `companies` are exact names compared without case, punctuation or legal suffixes (`股份有限公司`, `(股)公司`, `Co., Ltd.`, `Inc`). `company_keywords` catch an employer that posts under several names: a Han keyword (2+ characters) matches anywhere in the name, a Latin keyword (3+ letters) only as whole words, and `except:` keeps a different employer whose name happens to contain it. Shorter keywords are ignored with a warning. `node scripts/blacklist.mjs` lists every company name in the pipeline and the last discover audit that each rule bans, flagging keywords that hit more than one name; `--apply` moves open pre-submit rows that now match to `skip`, leaving submitted applications alone.
+
 ## Layout
 
 ```
@@ -201,7 +204,7 @@ adapters/     greenhouse.mjs 104.mjs      L2: search / detail / isLive now; fill
 browser/      launch.mjs session.mjs wait-human.mjs   L1: Patchright + real Chrome, per-site profile or CDP attach, ensureLoggedIn, wait_human
 lib/          state pipeline dedup blacklist report scoring tailor pdf http browser-fetch workspace profile credentials sessions answers knockout form tracker salary login followups retro
 modes/        score tailor followup interview debrief retro    L4: prompts run inside Claude Code / Codex
-scripts/      workspace discover score-prep score-apply tailor-prep ats-check build-pdf resume-pdf rank pay tailor-apply tabs tab-run prepare apply track followup outcome retro status daily.ps1 weekly.ps1
+scripts/      workspace discover blacklist score-prep score-apply tailor-prep ats-check build-pdf resume-pdf rank pay tailor-apply tabs tab-run prepare apply track followup outcome retro status daily.ps1 weekly.ps1
 templates/    resume.css cover.css        default stylesheets; <workspace>/source/templates/ overrides by file name
 examples/     workspace/                  templates copied by `workspace init`; the only config in this repo
 test/         node --test
