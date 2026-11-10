@@ -19,7 +19,8 @@ Rules:
 1. Reorder and reword `cv.md` content to match the posting. Never invent a skill, employer, date, title, degree or number. Every bullet must be traceable to a line in `cv.md`.
 2. Use the posting's vocabulary only where `cv.md` supports it. If the posting wants "Kubernetes" and `cv.md` says "deployed services on k8s", say Kubernetes. If `cv.md` has nothing, leave it out.
 3. Resume ≤ 2 pages, cover letter ≤ 1 page at the default stylesheet. Cut the least relevant roles first.
-4. Cover letter: 3 to 4 short paragraphs; why them, two concrete matches with evidence, one honest gap framed as a learning plan, close. No flattery.
+4. Cover letter: 3 to 4 short paragraphs; why them, two or three concrete matches with evidence, how you would approach the role's stated priorities (built only from strengths `cv.md` supports), close. No flattery.
+   Never volunteer a gap. Do not name a missing skill, a shortfall in years, team size or scale, or an unmet requirement, and do not hedge or apologise ("to be candid", "although I lack", "I have not yet", "坦白說", "雖然我沒有", "我尚未", "經驗較少"). A screener reads that sentence as the reason to reject. Gaps stay in `review.md` and the report's `## Gaps` for the human, who answers them in the interview. Being truthful means claiming nothing `cv.md` does not support, not listing what it lacks. A fact the employer needs (work authorization, relocation, notice period) gets one neutral sentence only when the posting or form asks for it. `ats-check` fails a cover letter that hedges.
 5. Fill the free-text drafts in `generated/applications/NNN/answers.md`. Never edit `source/answers.md` or lines marked `needs_confirmation`.
 6. Keep the same language as the posting unless `profile.yml` says otherwise.
 7. ATS shape: H2 headings only from Summary / Skills / Experience / Education / Certifications / Projects / Publications / Languages / Awards (or their zh-TW forms). Every role `### Company — Title` with a date line `YYYY-MM to YYYY-MM|present`, one format throughout, newest first. No tables, images, HTML, emoji or columns.
@@ -49,7 +50,7 @@ verdict: pass
 ```
 
 - Extract every hard-skill / tool / certification / seniority keyword from the posting as a row. Verdict `supported` needs a quote or close paraphrase from `cv.md`. `removed` means the drafter claimed it and you deleted it from the draft. `gap` means the posting wants it, `cv.md` has nothing, and the draft correctly does not claim it.
-- You MAY edit `cv.md` / `cover.md` in the application folder to remove unsupported claims. You may not add content.
+- You MAY edit `cv.md` / `cover.md` in the application folder to remove unsupported claims, and to delete any sentence in `cover.md` that volunteers a gap or hedges (drafter rule 4). You may not add content.
 - `verdict: fail` only if an unsupported claim remains after your edits or the draft misstates a date, title or employer. Otherwise `pass`.
 - Copy the final gap list into the report's `## Gaps` section.
 
