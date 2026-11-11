@@ -138,10 +138,10 @@ const SITE = () => siteConfig('104', {
   home_url: 'https://www.104.com.tw/jobs/main/',
   login_url: 'https://accounts.104.com.tw/login',
   login_url_re: 'accounts\\.104\\.com\\.tw',
-  apply_url_template: 'https://www.104.com.tw/job/{id}/apply',
+  apply_url_template: 'https://www.104.com.tw/job/{id}',   // no apply page: 應徵 on the job page opens a modal (?apply=form)
   locked_re: '帳號(已)?(被)?(鎖定|停用)|異常(登入|活動)|unusual activity',
   selectors: {
-    logged_in: ['a[href*="logout"]', 'a[href*="/profile"]', 'text=登出', 'a:has-text("前往履歷表")', 'a[href*="cweb_job_login"]'],
+    logged_in: ['a[href*="logout"]', 'a[href*="/profile"]', 'text=登出', 'a:has-text("前往履歷表")', 'a[href*="cweb_job_login"]', 'text=履歷符合度'],   // home page / job page
     logged_out: ['a[href*="accounts.104.com.tw/login"]', 'text=登入'],
     username: '#username, input[name="username"], input[name="email"], input[type="email"], input[name*="user" i]',
     password: '#password, input[name="password"], input[type="password"]',
@@ -155,8 +155,19 @@ export const site_config = () => SITE();
 export async function login_state(page) { return genericLoginState(page, SITE()); }
 export async function login(page, creds) { return genericLogin(page, creds, SITE()); }
 export function apply_url(job) { return SITE().apply_url_template.replace('{id}', jobIdOf(job.url) ?? ''); }
+// 應徵 is a <span>, repeated in banners and sticky bars: click the topmost visible one, then wait for the modal's textarea.
+// Nothing is sent until 確認送出, which stays with the human.
 export async function open_form(page) {
-  try { await page.locator('form:has(textarea), form:has(input[type="file"]), form').first().waitFor({ state: 'visible', timeout: 15000 }); return true; } catch { return false; }
+  await page.waitForTimeout(3000);
+  if (await page.getByText('今日已應徵').count()) throw new Error('104 shows 今日已應徵: already applied, nothing to fill');
+  const spans = page.locator('span').filter({ hasText: /^應徵$/ }).locator('visible=true');
+  let best = null, bestY = Infinity;
+  for (let i = 0, n = await spans.count(); i < n; i++) { const b = await spans.nth(i).boundingBox(); if (b && b.y < bestY) { bestY = b.y; best = spans.nth(i); } }
+  if (!best) return false;
+  await best.click();
+  try { await page.locator('textarea').locator('visible=true').first().waitFor({ state: 'visible', timeout: 15000 }); return true; } catch { return false; }
 }
+// The modal's one textarea is 自我推薦信 (limit 2000 characters); the resume is the 104 online resume, no upload.
+export const cover_letter_field = { only_textarea: true, max_chars: 2000 };
 export async function submit_gate() { return 'needs_human'; }
-export const notes = '104 應徵頁通常帶出站內履歷與自我推薦信 textarea；本工具只填 textarea 與文字欄位，附件與送出由你操作。';
+export const notes = '104 在職缺頁點「應徵」開出視窗：站內線上履歷 + 自我推薦信 textarea。本工具只把求職信填進推薦信，兩個勾選框與「確認送出」由你操作。';

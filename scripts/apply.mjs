@@ -13,7 +13,7 @@ import { P } from '../lib/paths.mjs';
 import { readPipeline, writePipeline, transition } from '../lib/pipeline.mjs';
 import { readReport, writeReport } from '../lib/report.mjs';
 import { parseAnswers, mergeAnswers } from '../lib/answers.mjs';
-import { scanForm, planFill, fillForm, summarize } from '../lib/form.mjs';
+import { scanForm, planFill, fillForm, summarize, coverLetterText } from '../lib/form.mjs';
 import { addApplication, duplicateChannel, countToday, logApplication } from '../lib/tracker.mjs';
 import { setMaterials } from '../lib/tailor.mjs';
 import { adapterFor } from '../adapters/index.mjs';
@@ -54,6 +54,13 @@ for (const [k, kind] of [['resume', 'cv'], ['cover_letter', 'cover']]) {
   }
 }
 
+// The letter as text, for forms that take it in a box instead of a file: cover.md without the name heading and contact line.
+const coverMd = fs.existsSync(path.join(dir, 'cover.md')) ? fs.readFileSync(path.join(dir, 'cover.md'), 'utf8') : '';
+const coverText = coverLetterText(coverMd);
+const coverField = adapter.cover_letter_field ?? {};
+if (coverField.max_chars && coverText.length > coverField.max_chars) { console.error(`[apply] cover letter is ${coverText.length} characters; ${row.source} allows ${coverField.max_chars}. Shorten cover.md first.`); process.exit(1); }
+const fillOpts = { files, texts: { cover_letter: coverText }, onlyTextareaIs: coverField.only_textarea ? 'cover_letter' : null };
+
 // ---- browser ----
 const job = { url: row.url, company: row.company, title: row.title };
 const session = await openSite(row.source);
@@ -66,7 +73,7 @@ try {
     await waitHuman(session.page, `${row.source}: application form not found at ${session.page.url()} — navigate to the form yourself, then press Enter`);
   }
   const fields = await scanForm(session.page);
-  plan = planFill(fields, answers, { files });
+  plan = planFill(fields, answers, fillOpts);
   console.log(`[apply] ${id} fields=${fields.length} plan=${JSON.stringify(summarize(plan))}`);
   if (!dry) plan = await fillForm(session.page, plan);
   fs.writeFileSync(path.join(dir, 'filled.json'), JSON.stringify({ id, url: session.page.url(), at: nowIso(), dry_run: dry, summary: summarize(plan), fields: plan }, null, 2));
@@ -92,7 +99,7 @@ try {
       const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
       answer = (await new Promise((r) => rl.question('> ', r))).trim().toLowerCase(); rl.close();
       if (answer !== 'next') break;
-      const more = planFill(await scanForm(session.page), answers, { files });
+      const more = planFill(await scanForm(session.page), answers, fillOpts);
       const filledMore = await fillForm(session.page, more);
       plan.push(...filledMore.filter((e) => !plan.some((p) => p.key === e.key)));
       needs.length = 0; needs.push(...plan.filter((e) => e.status === 'needs_confirmation'));
