@@ -103,6 +103,8 @@ const SITE = () => siteConfig('linkedin', {
   },
   cookie_names: ['li_at'],
 });
+/** Site settings (defaults + source/sites.yml); prepare reads home_url from here. */
+export const site_config = () => SITE();
 export async function login_state(page) { return genericLoginState(page, SITE()); }
 export async function login(page, creds) { return genericLogin(page, creds, SITE()); }
 export function apply_url(job) { return `${ORIGIN}/jobs/view/${jobIdOf(job.url) ?? ''}/`; }

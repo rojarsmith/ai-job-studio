@@ -141,7 +141,7 @@ const SITE = () => siteConfig('104', {
   apply_url_template: 'https://www.104.com.tw/job/{id}/apply',
   locked_re: '帳號(已)?(被)?(鎖定|停用)|異常(登入|活動)|unusual activity',
   selectors: {
-    logged_in: ['a[href*="logout"]', 'a[href*="/profile"]', 'text=登出'],
+    logged_in: ['a[href*="logout"]', 'a[href*="/profile"]', 'text=登出', 'a:has-text("前往履歷表")', 'a[href*="cweb_job_login"]'],
     logged_out: ['a[href*="accounts.104.com.tw/login"]', 'text=登入'],
     username: '#username, input[name="username"], input[name="email"], input[type="email"], input[name*="user" i]',
     password: '#password, input[name="password"], input[type="password"]',
@@ -150,6 +150,8 @@ const SITE = () => siteConfig('104', {
   },
   cookie_names: [],
 });
+/** Site settings (defaults + source/sites.yml); prepare reads home_url from here. */
+export const site_config = () => SITE();
 export async function login_state(page) { return genericLoginState(page, SITE()); }
 export async function login(page, creds) { return genericLogin(page, creds, SITE()); }
 export function apply_url(job) { return SITE().apply_url_template.replace('{id}', jobIdOf(job.url) ?? ''); }

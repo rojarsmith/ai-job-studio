@@ -28,7 +28,7 @@ for (const site of sites) {
   }
   const session = await openSite(site);
   try {
-    const home = adapter.home_url ?? (await import('../lib/login.mjs')).siteConfig(site, {}).home_url;
+    const home = adapter.home_url ?? adapter.site_config?.().home_url ?? (await import('../lib/login.mjs')).siteConfig(site, {}).home_url;
     if (check) {
       if (home) await session.page.goto(home, { waitUntil: 'domcontentloaded' });
       console.log(`[prepare] ${site}: login_state=${await adapter.login_state(session.page)} url=${session.page.url()}`);
